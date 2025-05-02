@@ -1,14 +1,15 @@
 {
   "name": "depositor",
   "version": "1.0.0",
-  "description": "CLI tool for generating Ethereum 2.0 deposit_data and keystore files (Node 23 + tsx)",
+  "description": "CLI tool for generating Ethereum 2.0 deposit_data and keystore files (Node 23 + tsx)",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
     "start": "tsx src/index.ts",
     "generate": "tsx src/index.ts",
     "build": "tsc --project tsconfig.json",
-    "test": "node --test",
+    "test": "node --import tsx/esm --test test/**/*.ts",
+    "test:coverage": "node --import tsx/esm --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info test/**/*.ts",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [
@@ -34,12 +35,10 @@
     "@chainsafe/bls": "^8.1.0",
     "@chainsafe/bls-keygen": "^0.4.0",
     "@chainsafe/bls-keystore": "^3.1.0",
-    "@chainsafe/blst": "^2.2.0",
     "@chainsafe/ssz": "^1.2.0",
     "@lodestar/params": "^1.29.0",
     "@lodestar/state-transition": "^1.29.0",
     "@lodestar/types": "^1.29.0",
     "@scure/bip39": "^1.5.4"
-  },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  }
 }

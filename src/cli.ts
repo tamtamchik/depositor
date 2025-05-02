@@ -1,24 +1,37 @@
 #!/usr/bin/env -S tsx
+
+/**
+ * Command Line Interface for Ethereum 2.0 deposit tool
+ */
+
+// Node.js built-in imports
 import { parseArgs } from "node:util";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
+
+// External package imports
 import * as bip39 from "@scure/bip39";
 import { wordlist as english } from "@scure/bip39/wordlists/english";
 import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
 import { DOMAIN_DEPOSIT } from "@lodestar/params";
-import { generateValidatorKeys, getValidatorInfo } from "./validator";
-import { generateDepositData, verifyDepositData } from "./deposit";
-import { buildWithdrawalCredentials, ONE_ETH_GWEI } from "./utils";
-import { CliOptions, WithdrawalCredentialsType } from "./types";
-import { getNetworkConfig } from "./config";
 
-function debugLog(...args: any[]) {
-  if (process.env.DEBUG) {
-    console.log(...args);
-  }
-}
+// Local imports
+import type { CliOptions, WithdrawalCredentialsType } from "./types.js";
+import {
+  ONE_ETH_GWEI,
+  getNetworkConfig,
+  buildWithdrawalCredentials,
+  generateValidatorKeys,
+  getValidatorInfo,
+  generateDepositData,
+  verifyDepositData,
+  debugLog,
+} from "./core.js";
 
-async function main() {
+/**
+ * Main CLI function
+ */
+export async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       mnemonic: { type: "string" },
@@ -33,8 +46,9 @@ async function main() {
       debug: { type: "boolean", default: false },
     },
     allowPositionals: true,
-  }) as { values: CliOptions & { debug: boolean } };
+  }) as { values: CliOptions };
 
+  // Enable debug mode if requested
   if (values.debug) {
     process.env.DEBUG = "true";
   }
@@ -56,14 +70,19 @@ async function main() {
   );
   debugLog("----------------\n");
 
+  // Parse arguments
   const NUM = Number(values.validators);
   const AMOUNT = Number(values.amount) * ONE_ETH_GWEI;
   const WC_TYPE = Number(values["wc-type"]) as WithdrawalCredentialsType;
+
+  // Validate withdrawal credential type
   if (![0, 1, 2].includes(WC_TYPE))
     throw new Error("--wc-type must be 0, 1, or 2");
 
+  // Create output directory
   await mkdir(values.out, { recursive: true });
 
+  // Generate or use provided mnemonic
   const mnemonic = values.mnemonic ?? bip39.generateMnemonic(english);
   console.log(`\n📝  Mnemonic: ${mnemonic}\n`);
 
@@ -75,9 +94,11 @@ async function main() {
     ZERO_HASH
   );
 
-  const depositDataArray: any[] = [];
+  // Generate validator keys and deposit data
+  const depositDataArray = [];
 
   for (let i = 0; i < NUM; i++) {
+    // Generate validator keys
     const { signing, pubkey } = await generateValidatorKeys(
       mnemonic,
       i,
@@ -85,14 +106,17 @@ async function main() {
       values.out
     );
 
+    // Log validator information
     getValidatorInfo(signing, pubkey, i);
 
+    // Build withdrawal credentials
     const withdrawalCredentials = buildWithdrawalCredentials(
       WC_TYPE,
       pubkey,
       values.address
     );
 
+    // Generate deposit data
     const depositData = await generateDepositData(
       pubkey,
       signing,
@@ -104,10 +128,12 @@ async function main() {
     depositDataArray.push(depositData);
   }
 
+  // Write deposit data to file
   const file = join(values.out, `deposit_data-${Date.now()}.json`);
   await writeFile(file, JSON.stringify(depositDataArray, null, 2));
   console.log(`✅  ${NUM} validator(s) written to ${file}`);
 
+  // Verify deposit data if requested
   if (values.verify) {
     console.log("\n🔍 Verifying deposit_data…");
     const buf = await readFile(file, "utf8");
@@ -123,7 +149,10 @@ async function main() {
   console.log(`🔑  Keystores are in ${values.out}\n`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Run the CLI if this is the main module
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
