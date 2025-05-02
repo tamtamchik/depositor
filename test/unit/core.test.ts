@@ -24,6 +24,10 @@ import {
   // Deposit functions
   computeDepositDataRoot,
   verifyDepositData,
+  createDepositData,
+
+  // Constants
+  ONE_ETH_GWEI,
 } from "@/core.js";
 
 // Import required dependencies to test verifyDepositData
@@ -465,6 +469,44 @@ describe("Core", () => {
           "Should produce the same root for identical inputs"
         );
       });
+
+      it("should accept string amount and convert it to BigInt", () => {
+        // Example values (these are test values, not real validator data)
+        const pubkey =
+          "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
+        const withdrawalCredentials =
+          "0x0100000000000000000000001234567890123456789012345678901234567890";
+        const signature =
+          "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
+        const amountETH = "32"; // String amount
+
+        const root = computeDepositDataRoot(
+          pubkey,
+          withdrawalCredentials,
+          signature,
+          amountETH
+        );
+
+        // Verify root properties
+        assert.strictEqual(typeof root, "string");
+        assert.strictEqual(root.startsWith("0x"), true);
+        assert.strictEqual(root.length, 66); // 0x + 64 chars (32 bytes)
+
+        // Compare with root calculated using BigInt for the same amount
+        const rootWithBigInt = computeDepositDataRoot(
+          pubkey,
+          withdrawalCredentials,
+          signature,
+          32n
+        );
+
+        // Both approaches should yield the same result
+        assert.strictEqual(
+          root,
+          rootWithBigInt,
+          "String amount conversion should yield same result as direct BigInt"
+        );
+      });
     });
 
     describe("verifyDepositData", () => {
@@ -529,6 +571,71 @@ describe("Core", () => {
           // Restore console.log
           console.log = originalLog;
         }
+      });
+    });
+
+    describe("createDepositData", () => {
+      it("should create deposit data without writing files", async () => {
+        const mnemonic =
+          "test test test test test test test test test test test junk";
+        const ethAddress = "0x1234567890123456789012345678901234567890";
+
+        const depositData = await createDepositData({
+          mnemonic,
+          index: 0,
+          ethAddress,
+          network: "mainnet",
+          amount: 32n * ONE_ETH_GWEI,
+        });
+
+        // Verify the deposit data structure
+        assert.strictEqual(typeof depositData.pubkey, "string");
+        assert.strictEqual(typeof depositData.withdrawal_credentials, "string");
+        assert.strictEqual(depositData.amount, "32000000000");
+        assert.strictEqual(typeof depositData.signature, "string");
+        assert.strictEqual(typeof depositData.deposit_message_root, "string");
+        assert.strictEqual(typeof depositData.deposit_data_root, "string");
+        assert.strictEqual(depositData.network_name, "mainnet");
+
+        // Verify the withdrawal credentials has the right prefix and ETH address
+        assert.strictEqual(
+          depositData.withdrawal_credentials.substring(0, 2),
+          "01"
+        ); // Type 1
+        assert.strictEqual(
+          depositData.withdrawal_credentials.substring(24),
+          "1234567890123456789012345678901234567890"
+        );
+      });
+
+      it("should generate different deposit data for different indices", async () => {
+        const mnemonic =
+          "test test test test test test test test test test test junk";
+        const ethAddress = "0x1234567890123456789012345678901234567890";
+
+        const depositData1 = await createDepositData({
+          mnemonic,
+          index: 0,
+          ethAddress,
+          network: "mainnet",
+          amount: 32n * ONE_ETH_GWEI,
+        });
+
+        const depositData2 = await createDepositData({
+          mnemonic,
+          index: 1,
+          ethAddress,
+          network: "mainnet",
+          amount: 32n * ONE_ETH_GWEI,
+        });
+
+        // They should have different pubkeys
+        assert.notStrictEqual(depositData1.pubkey, depositData2.pubkey);
+        // But same withdrawal credentials (same ETH address)
+        assert.strictEqual(
+          depositData1.withdrawal_credentials,
+          depositData2.withdrawal_credentials
+        );
       });
     });
   });

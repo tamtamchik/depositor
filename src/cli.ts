@@ -20,11 +20,10 @@ import type { CliOptions, WithdrawalCredentialsType } from "./types.js";
 import {
   ONE_ETH_GWEI,
   getNetworkConfig,
-  buildWithdrawalCredentials,
   generateValidatorKeys,
   getValidatorInfo,
-  generateDepositData,
   verifyDepositData,
+  createDepositData,
   debugLog,
 } from "./core.js";
 
@@ -65,14 +64,14 @@ export async function main(): Promise<void> {
   debugLog(`Verify: ${values.verify}`);
   debugLog(
     `Amount: ${values.amount} ETH (${
-      Number(values.amount) * ONE_ETH_GWEI
+      BigInt(values.amount) * ONE_ETH_GWEI
     } Gwei)`
   );
   debugLog("----------------\n");
 
   // Parse arguments
   const NUM = Number(values.validators);
-  const AMOUNT = Number(values.amount) * ONE_ETH_GWEI;
+  const AMOUNT = BigInt(values.amount) * ONE_ETH_GWEI;
   const WC_TYPE = Number(values["wc-type"]) as WithdrawalCredentialsType;
 
   // Validate withdrawal credential type
@@ -102,7 +101,7 @@ export async function main(): Promise<void> {
   const depositDataArray = [];
 
   for (let i = 0; i < NUM; i++) {
-    // Generate validator keys
+    // Generate validator keys with keystore files
     const { signing, pubkey } = await generateValidatorKeys(
       mnemonic,
       i,
@@ -113,21 +112,15 @@ export async function main(): Promise<void> {
     // Log validator information
     getValidatorInfo(signing, pubkey, i);
 
-    // Build withdrawal credentials
-    const withdrawalCredentials = buildWithdrawalCredentials(
-      WC_TYPE,
-      pubkey,
-      values["wc-address"]
-    );
-
-    // Generate deposit data
-    const depositData = await generateDepositData(
-      pubkey,
-      signing,
-      withdrawalCredentials,
-      AMOUNT,
-      values.chain
-    );
+    // Generate deposit data using the all-in-one function
+    const depositData = await createDepositData({
+      mnemonic,
+      index: i,
+      ethAddress: values["wc-address"] || "",
+      network: values.chain,
+      amount: AMOUNT,
+      wcType: WC_TYPE,
+    });
 
     depositDataArray.push(depositData);
   }

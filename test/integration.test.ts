@@ -50,7 +50,7 @@ describe("End-to-end deposit flow", () => {
     const withdrawalCredentials = buildWithdrawalCredentials(0, pubkey);
 
     // Generate deposit data
-    const amount = ONE_ETH_GWEI * 32; // 32 ETH in Gwei
+    const amount = ONE_ETH_GWEI * 32n; // 32 ETH in Gwei
     const depositData = await generateDepositData(
       pubkey,
       signing,

@@ -1,21 +1,42 @@
 #!/usr/bin/env -S tsx
 
 /**
- * Ethereum 2.0 deposit-cli replacement for Node.js 23 and TypeScript
+ * Ethereum 2.0 Deposit Tool - API
+ *
+ * This module exports functionality for generating validator keys,
+ * creating withdrawal credentials, and generating deposit data for Ethereum 2.0.
  */
 
-// Export all types from types.js
-export * from "./types.js";
+// Export public types
+export type {
+  WithdrawalCredentialsType,
+  NetworkConfig,
+  DepositData,
+  ValidatorKeys,
+} from "./types.js";
 
-// Export main functionality from core.js
-export * from "./core.js";
+// Export core functions for API usage
+export {
+  // Constants
+  ONE_ETH_GWEI,
+  networks,
 
-// Import and run CLI if this is the main module
-import { main } from "./cli.js";
+  // Network functions
+  getNetworkConfig,
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
-}
+  // Key generation
+  generateValidatorKeys,
+  getValidatorInfo,
+
+  // Deposit data functions
+  buildWithdrawalCredentials,
+  generateDepositData,
+  verifyDepositData,
+  computeDepositDataRoot,
+  createDepositData,
+
+  // Utility functions
+  sha256,
+  hex,
+  fromHex,
+} from "./core.js";

@@ -164,7 +164,7 @@ describe("Validator and Deposit Generation", () => {
       const withdrawalCredentials = buildWithdrawalCredentials(0, pubkey);
 
       // Generate deposit data
-      const amount = ONE_ETH_GWEI * 32; // 32 ETH in Gwei
+      const amount = ONE_ETH_GWEI * 32n; // 32 ETH in Gwei
       const depositData = await generateDepositData(
         pubkey,
         signing,
@@ -237,7 +237,7 @@ describe("Validator and Deposit Generation", () => {
       const wc2 = buildWithdrawalCredentials(0, validator2.pubkey);
 
       // Generate deposit data
-      const amount = ONE_ETH_GWEI * 32;
+      const amount = ONE_ETH_GWEI * 32n;
       const deposit1 = await generateDepositData(
         validator1.pubkey,
         validator1.signing,
@@ -297,7 +297,7 @@ describe("Validator and Deposit Generation", () => {
       const withdrawalCredentials = buildWithdrawalCredentials(0, pubkey);
 
       // Generate deposit data
-      const amount = ONE_ETH_GWEI * 32;
+      const amount = ONE_ETH_GWEI * 32n;
       const depositData = await generateDepositData(
         pubkey,
         signing,
@@ -342,7 +342,7 @@ describe("Validator and Deposit Generation", () => {
       );
 
       const withdrawalCredentials = buildWithdrawalCredentials(0, pubkey);
-      const amount = ONE_ETH_GWEI * 32;
+      const amount = ONE_ETH_GWEI * 32n;
       const validDepositData = await generateDepositData(
         pubkey,
         signing,
@@ -398,7 +398,7 @@ describe("Validator and Deposit Generation", () => {
       );
 
       const withdrawalCredentials = buildWithdrawalCredentials(0, pubkey);
-      const amount = ONE_ETH_GWEI * 32;
+      const amount = ONE_ETH_GWEI * 32n;
       const validDepositData = await generateDepositData(
         pubkey,
         signing,

@@ -1,12 +1,24 @@
 {
-  "name": "depositor",
+  "name": "@tamtamchik/depositor",
   "version": "1.0.0",
   "description": "CLI tool for generating Ethereum 2.0 deposit_data and keystore files (Node 23 + tsx)",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "depositor": "dist/bin.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "start": "tsx src/index.ts",
-    "generate": "tsx src/index.ts",
+    "start": "tsx src/bin.ts",
+    "generate": "tsx src/bin.ts",
+    "example:files": "tsx examples/files.ts",
+    "example:data": "tsx examples/data.ts",
+    "prepublishOnly": "npm run build",
     "build": "tsc --project tsconfig.json",
     "test": "node --import tsx/esm --test test/**/*.ts",
     "test:coverage": "node --import tsx/esm --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info test/**/*.ts",
@@ -20,11 +32,19 @@
     "bls",
     "validator"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Yuri Tkachenko",
+  "license": "MIT",
   "engines": {
     "node": ">=23"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tamtamchik/depositor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tamtamchik/depositor/issues"
+  },
+  "homepage": "https://github.com/tamtamchik/depositor",
   "devDependencies": {
     "@types/node": "^20.11.27",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
