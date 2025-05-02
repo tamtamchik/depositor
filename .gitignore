@@ -1,0 +1,4 @@
+node_modules/
+validator_keys/
+
+.DS_Store
