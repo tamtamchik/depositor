@@ -36,13 +36,13 @@ export async function main(): Promise<void> {
     options: {
       mnemonic: { type: "string" },
       validators: { type: "string", default: "1" },
-      "wc-type": { type: "string", default: "0" },
-      address: { type: "string" },
+      "wc-type": { type: "string", default: "1" },
+      "wc-address": { type: "string" },
       chain: { type: "string", default: "mainnet" },
-      password: { type: "string", default: "SuperSecurePassword123" },
+      password: { type: "string" },
       out: { type: "string", default: "./validator_keys" },
       verify: { type: "boolean", default: true },
-      amount: { type: "string", default: "1" },
+      amount: { type: "string", default: "32" },
       debug: { type: "boolean", default: false },
     },
     allowPositionals: true,
@@ -59,7 +59,7 @@ export async function main(): Promise<void> {
   debugLog(`Mnemonic: ${values.mnemonic ? "provided" : "will be generated"}`);
   debugLog(`Number of validators: ${values.validators}`);
   debugLog(`Withdrawal credentials type: ${values["wc-type"]}`);
-  debugLog(`Withdrawal address: ${values.address || "not provided"}`);
+  debugLog(`Withdrawal address: ${values["wc-address"] || "not provided"}`);
   debugLog(`Chain: ${values.chain}`);
   debugLog(`Output directory: ${values.out}`);
   debugLog(`Verify: ${values.verify}`);
@@ -78,6 +78,10 @@ export async function main(): Promise<void> {
   // Validate withdrawal credential type
   if (![0, 1, 2].includes(WC_TYPE))
     throw new Error("--wc-type must be 0, 1, or 2");
+
+  // Validate password is provided
+  if (!values.password)
+    throw new Error("--password is required for keystore generation");
 
   // Create output directory
   await mkdir(values.out, { recursive: true });
@@ -113,7 +117,7 @@ export async function main(): Promise<void> {
     const withdrawalCredentials = buildWithdrawalCredentials(
       WC_TYPE,
       pubkey,
-      values.address
+      values["wc-address"]
     );
 
     // Generate deposit data

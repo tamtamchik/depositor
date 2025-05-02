@@ -2,8 +2,6 @@ import { describe, it, before, after } from "node:test";
 import assert from "node:assert";
 import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
-import * as bip39 from "@scure/bip39";
-import { wordlist as english } from "@scure/bip39/wordlists/english";
 import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
 import { DOMAIN_DEPOSIT } from "@lodestar/params";
 
@@ -15,7 +13,7 @@ import {
   generateDepositData,
   verifyDepositData,
   getNetworkConfig,
-} from "../src/core.js";
+} from "@/core.js";
 
 describe("End-to-end deposit flow", () => {
   const TEST_DIR = "./test_validator_keys";

@@ -7,6 +7,7 @@ This directory contains tests for the Ethereum 2.0 deposit data and keystore gen
 - `unit/`: Unit tests for individual modules
   - `core.test.ts`: Tests for the core module including utility functions, proof functions, and deposit data generation
   - `cli.test.ts`: Tests command-line argument parsing and default handling
+  - `generation.test.ts`: Tests for validator key generation, deposit data creation, and verification
 - `integration.test.ts`: End-to-end test of the validator key and deposit data generation flow
 
 ## Test Coverage
@@ -30,13 +31,9 @@ npm run test:coverage
 
 Current coverage metrics:
 
-- Line coverage: ~83%
-- Branch coverage: ~97%
-- Function coverage: ~81%
-
-Areas with lower coverage:
-
-- `core.ts`: Certain functions related to validator key generation and deposit data creation
+- Line coverage: 100%
+- Branch coverage: 97.7%
+- Function coverage: 100%
 
 ## Running Tests
 
@@ -64,15 +61,16 @@ Tests use Node.js's built-in test runner and assert module. To add a new test:
    ```
 3. Import the modules to test:
    ```typescript
-   import { functionToTest } from "../../src/core.js";
+   import { functionToTest } from "@/core.js";
    ```
 4. Write your tests using the `describe` and `it` functions
 5. Use `assert` to check that the function behaves as expected
 
-## Improving Test Coverage
+## Maintaining Test Coverage
 
-To improve test coverage:
+To maintain high test coverage:
 
-1. Run the coverage report to identify uncovered lines
-2. Add tests for the uncovered functionality
-3. Focus on critical code paths, especially those related to key generation and deposit verification
+1. Run the coverage report after making changes
+2. Add tests for any new functionality
+3. Focus on testing both the main path and error paths
+4. Use debug flags to validate debug code paths

@@ -57,7 +57,7 @@ export const networks: Record<string, NetworkConfig> = {
 };
 
 // Debug logging helper
-export function debugLog(...args: any[]): void {
+export function debugLog(...args: unknown[]): void {
   if (process.env.DEBUG) {
     console.log(...args);
   }
@@ -169,7 +169,7 @@ export function buildWithdrawalCredentials(
     out.set(sha256(pub).subarray(1), 1);
   } else {
     if (!addr)
-      throw new Error("--address is required when --wc-type is 1 or 2");
+      throw new Error("--wc-address is required when --wc-type is 1 or 2");
     out[0] = type;
     out.set(parseAddress(addr), 12);
   }

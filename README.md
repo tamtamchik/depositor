@@ -11,13 +11,12 @@ A modern TypeScript implementation of the Ethereum 2.0 deposit tool built with N
 - ✅ Verification of generated data
 - ✅ Support for multiple networks (mainnet, sepolia, hoodi)
 - ✅ Support for different withdrawal credential types (BLS, ETH address)
-- ✅ High test coverage (>80% line, >97% branch coverage)
+- ✅ High test coverage (100% line, 97.7% branch coverage)
 - ✅ Modern codebase with TypeScript and ES Modules
 
 ## Prerequisites
 
-- Node.js v23+
-- npm or yarn
+- Node.js (23+)
 
 ## Installation
 
@@ -32,12 +31,6 @@ cd depositor
 
 ```bash
 npm install
-```
-
-Alternatively, use the setup script:
-
-```bash
-./setup.sh
 ```
 
 ## Usage
@@ -58,25 +51,25 @@ npm run generate -- [options]
 
 ### Options
 
-| Option         | Description                                                                    | Default                |
-| -------------- | ------------------------------------------------------------------------------ | ---------------------- |
-| `--mnemonic`   | Mnemonic seed for key generation (optional, will be generated if not provided) |                        |
-| `--validators` | Number of validators to generate                                               | 1                      |
-| `--wc-type`    | Withdrawal credentials type (0=BLS, 1/2=ETH address)                           | 0                      |
-| `--address`    | Ethereum address for withdrawal (required when wc-type is 1 or 2)              |                        |
-| `--chain`      | Network chain to use (mainnet, sepolia, hoodi)                                 | mainnet                |
-| `--password`   | Password for keystore encryption                                               | SuperSecurePassword123 |
-| `--out`        | Output directory for keystores                                                 | ./validator_keys       |
-| `--verify`     | Whether to verify generated deposit data                                       | true                   |
-| `--amount`     | Amount in ETH to deposit per validator                                         | 1                      |
-| `--debug`      | Enable debug logging                                                           | false                  |
+| Option         | Description                                                                    | Default          |
+| -------------- | ------------------------------------------------------------------------------ | ---------------- |
+| `--mnemonic`   | Mnemonic seed for key generation (optional, will be generated if not provided) |                  |
+| `--validators` | Number of validators to generate                                               | 1                |
+| `--wc-type`    | Withdrawal credentials type (0=BLS, 1/2=ETH address)                           | 1                |
+| `--wc-address` | Ethereum address for withdrawal (required when wc-type is 1 or 2)              |                  |
+| `--chain`      | Network chain to use (mainnet, sepolia, hoodi)                                 | mainnet          |
+| `--password`   | Password for keystore encryption                                               |                  |
+| `--out`        | Output directory for keystores                                                 | ./validator_keys |
+| `--verify`     | Whether to verify generated deposit data                                       | true             |
+| `--amount`     | Amount in ETH to deposit per validator                                         | 32               |
+| `--debug`      | Enable debug logging                                                           | false            |
 
 ### Example
 
 Generate 2 validators for sepolia with ETH withdrawal address:
 
 ```bash
-npm run generate -- --validators=2 --wc-type=1 --address=0xYourEthAddress --chain=sepolia --amount=32
+npm run generate -- --validators=2 --wc-address=0xYourEthAddress --chain=sepolia --password=YourSecurePassword
 ```
 
 ## API Usage
@@ -164,9 +157,9 @@ npm run test:coverage
 
 Current coverage metrics:
 
-- Line coverage: ~83%
-- Branch coverage: ~97%
-- Function coverage: ~81%
+- Line coverage: 100%
+- Branch coverage: 97.7%
+- Function coverage: 100%
 
 See the [test README](./test/README.md) for more details about testing.
 
@@ -188,7 +181,7 @@ This project started as a refactoring effort to modernize and optimize an Ethere
 
 1. Consolidating 7 separate files into 3 core files
 2. Implementing a modular design with clear separation of concerns
-3. Adding comprehensive test coverage (>96%)
+3. Adding comprehensive test coverage (100% line coverage)
 4. Modernizing the codebase with TypeScript and ES Modules
 5. Enhancing developer experience with better error handling and documentation
 6. Adding support for debugging and verification

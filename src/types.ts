@@ -38,7 +38,7 @@ export interface CliOptions {
   mnemonic?: string;
   validators: string;
   "wc-type": string;
-  address?: string;
+  "wc-address"?: string;
   chain: string;
   password: string;
   out: string;

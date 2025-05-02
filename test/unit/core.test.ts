@@ -1,4 +1,4 @@
-import { describe, it, mock, before, after } from "node:test";
+import { describe, it, before, after } from "node:test";
 import assert from "node:assert";
 import { createHash } from "node:crypto";
 
@@ -24,10 +24,9 @@ import {
   // Deposit functions
   computeDepositDataRoot,
   verifyDepositData,
-} from "../../src/core.js";
+} from "@/core.js";
 
 // Import required dependencies to test verifyDepositData
-import { fromHexString } from "@chainsafe/ssz";
 import { DOMAIN_DEPOSIT } from "@lodestar/params";
 import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
 
@@ -212,7 +211,7 @@ describe("Core", () => {
         const pubkey = new Uint8Array(48).fill(1);
         assert.throws(
           () => buildWithdrawalCredentials(1, pubkey),
-          /--address is required when --wc-type is 1 or 2/
+          /--wc-address is required when --wc-type is 1 or 2/
         );
       });
     });
@@ -225,7 +224,7 @@ describe("Core", () => {
 
         // Mock console.log
         let logCalled = false;
-        console.log = (...args: any[]) => {
+        console.log = () => {
           logCalled = true;
         };
 
@@ -250,7 +249,7 @@ describe("Core", () => {
 
         // Mock console.log
         let logCalled = false;
-        console.log = (...args: any[]) => {
+        console.log = () => {
           logCalled = true;
         };
 
@@ -510,7 +509,7 @@ describe("Core", () => {
 
         try {
           // Mock console.log to track calls
-          console.log = (...args: any[]) => {
+          console.log = () => {
             logCalls++;
           };
 
