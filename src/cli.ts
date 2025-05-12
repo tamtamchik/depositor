@@ -87,7 +87,7 @@ export async function main(): Promise<void> {
   await mkdir(values.out, { recursive: true });
 
   // Generate or use provided mnemonic
-  const mnemonic = values.mnemonic ?? bip39.generateMnemonic(english);
+  const mnemonic = values.mnemonic ?? bip39.generateMnemonic(english, 256);
   console.log(`\n📝  Mnemonic: ${mnemonic}\n`);
 
   // Get network configuration
