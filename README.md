@@ -2,6 +2,9 @@
 
 A modern TypeScript implementation of the Ethereum 2.0 deposit tool built with Node.js 23.
 
+> [!IMPORTANT]
+> **DO NOT USE THIS TOOL ON THE MAINNET!**
+
 ## Features
 
 - ✅ Generate Ethereum 2.0 validator keys
