@@ -1,25 +1,25 @@
-import { describe, it, before, after } from "node:test";
 import assert from "node:assert";
-import { readFile, rm, mkdtemp } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-
-import { ssz } from "@lodestar/types/phase0";
-import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
-import { DOMAIN_DEPOSIT } from "@lodestar/params";
+import { join } from "node:path";
+import { after, before, describe, it } from "node:test";
 
 import {
-  ONE_ETH_GWEI,
-  networks,
-  hex,
-  fromHex,
   buildWithdrawalCredentials,
-  generateValidatorKeys,
-  generateDepositData,
-  verifyDepositData,
   computeDepositDataRoot,
-} from "@/core.js";
-import type { DepositData } from "@/types.js";
+  computeDomain,
+  DepositDataType,
+  DOMAIN_DEPOSIT,
+  fromHex,
+  generateDepositData,
+  generateValidatorKeys,
+  hex,
+  networks,
+  ONE_ETH_GWEI,
+  verifyDepositData,
+  ZERO_HASH,
+} from "../../src/core.ts";
+import type { DepositData } from "../../src/types.ts";
 
 const TEST_MNEMONIC =
   "test test test test test test test test test test test junk";
@@ -106,7 +106,7 @@ describe("Spec compliance", () => {
       );
 
       const sszRoot = hex(
-        ssz.DepositData.hashTreeRoot({
+        DepositDataType.hashTreeRoot({
           pubkey,
           withdrawalCredentials: wc,
           amount: 32 * ONE_ETH_GWEI,

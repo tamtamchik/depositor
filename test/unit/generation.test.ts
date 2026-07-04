@@ -1,20 +1,20 @@
-import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
-import { mkdir, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
-import { DOMAIN_DEPOSIT } from "@lodestar/params";
-
+import { mkdir, rm } from "node:fs/promises";
+import { afterEach, beforeEach, describe, it } from "node:test";
 // Import functions to test
 import {
-  generateValidatorKeys,
-  getValidatorInfo,
-  generateDepositData,
-  verifyDepositData,
   buildWithdrawalCredentials,
-  ONE_ETH_GWEI,
+  computeDomain,
+  DOMAIN_DEPOSIT,
+  generateDepositData,
+  generateValidatorKeys,
   getNetworkConfig,
-} from "@/core.js";
+  getValidatorInfo,
+  ONE_ETH_GWEI,
+  verifyDepositData,
+  ZERO_HASH,
+} from "../../src/core.ts";
 
 describe("Validator and Deposit Generation", () => {
   // Create a temporary directory for tests

@@ -40,10 +40,10 @@ npm install
 
 ### CLI Interface
 
-Run the tool directly with `npx tsx`:
+Run the tool directly with Node:
 
 ```bash
-npx tsx src/cli.ts [options]
+node --experimental-strip-types src/cli.ts [options]
 ```
 
 Or use the provided npm scripts:
@@ -138,8 +138,7 @@ depositor/
 │   └── integration.test.ts # End-to-end tests
 ├── package.json       # Dependencies and scripts
 ├── tsconfig.json      # TypeScript configuration
-├── .eslintrc.json     # ESLint configuration
-└── setup.sh           # Setup script
+└── biome.json         # Biome linter configuration
 ```
 
 ## Development

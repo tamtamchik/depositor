@@ -1,19 +1,19 @@
-import { describe, it, before, after } from "node:test";
 import assert from "node:assert";
-import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
-import { DOMAIN_DEPOSIT } from "@lodestar/params";
-
+import { after, before, describe, it } from "node:test";
 // Import from core module
 import {
-  ONE_ETH_GWEI,
   buildWithdrawalCredentials,
-  generateValidatorKeys,
+  computeDomain,
+  DOMAIN_DEPOSIT,
   generateDepositData,
-  verifyDepositData,
+  generateValidatorKeys,
   getNetworkConfig,
-} from "@/core.js";
+  ONE_ETH_GWEI,
+  verifyDepositData,
+  ZERO_HASH,
+} from "../src/core.ts";
 
 describe("End-to-end deposit flow", () => {
   const TEST_DIR = "./test_validator_keys";

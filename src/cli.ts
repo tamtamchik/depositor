@@ -4,29 +4,29 @@
  * Command Line Interface for Ethereum 2.0 deposit tool
  */
 
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 // Node.js built-in imports
 import { parseArgs } from "node:util";
-import { mkdir, writeFile, readFile } from "node:fs/promises";
-import { join } from "node:path";
 
 // External package imports
 import * as bip39 from "@scure/bip39";
-import { wordlist as english } from "@scure/bip39/wordlists/english";
-import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
-import { DOMAIN_DEPOSIT } from "@lodestar/params";
-
-// Local imports
-import type { CliOptions, WithdrawalCredentialsType } from "./types.js";
+import { wordlist as english } from "@scure/bip39/wordlists/english.js";
 import {
-  ONE_ETH_GWEI,
-  getNetworkConfig,
   buildWithdrawalCredentials,
-  generateValidatorKeys,
-  getValidatorInfo,
-  generateDepositData,
-  verifyDepositData,
+  computeDomain,
+  DOMAIN_DEPOSIT,
   debugLog,
-} from "./core.js";
+  generateDepositData,
+  generateValidatorKeys,
+  getNetworkConfig,
+  getValidatorInfo,
+  ONE_ETH_GWEI,
+  verifyDepositData,
+  ZERO_HASH,
+} from "./core.ts";
+// Local imports
+import type { CliOptions, WithdrawalCredentialsType } from "./types.ts";
 
 /**
  * Main CLI function

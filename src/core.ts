@@ -6,30 +6,28 @@
 import { createHash } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-
-// External package imports
-import { toHexString, fromHexString } from "@chainsafe/ssz";
-import { ssz } from "@lodestar/types/phase0";
 import {
-  computeDomain,
-  computeSigningRoot,
-  ZERO_HASH,
-} from "@lodestar/state-transition";
-import { DOMAIN_DEPOSIT } from "@lodestar/params";
-import {
-  deriveKeyFromMnemonic,
   deriveEth2ValidatorKeys,
+  deriveKeyFromMnemonic,
 } from "@chainsafe/bls-keygen";
 import { create as createKeystore } from "@chainsafe/bls-keystore";
-import bls from "@chainsafe/bls/herumi";
+// External package imports
+import {
+  ByteVectorType,
+  ContainerType,
+  fromHexString,
+  toHexString,
+  UintNumberType,
+} from "@chainsafe/ssz";
+import { bls12_381 } from "@noble/curves/bls12-381.js";
 
 // Local imports
 import type {
-  NetworkConfig,
   DepositData,
-  WithdrawalCredentialsType,
+  NetworkConfig,
   ValidatorKeys,
-} from "./types.js";
+  WithdrawalCredentialsType,
+} from "./types.ts";
 
 /**
  * ==============================
@@ -39,6 +37,73 @@ import type {
 
 // Ethereum amount conversion constant
 export const ONE_ETH_GWEI = 1_000_000_000; // 1 ETH = 1e9 Gwei
+
+// Deposit domain type from the consensus spec (fixed since genesis)
+export const DOMAIN_DEPOSIT = Uint8Array.of(0x03, 0x00, 0x00, 0x00);
+
+// Genesis validators root is zero for deposit signatures
+export const ZERO_HASH = new Uint8Array(32);
+
+// BLS signature scheme: Ethereum uses the proof-of-possession DST (minimal-pubkey-size variant)
+const blsSigs = bls12_381.longSignatures;
+const BLS_DST = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_POP_";
+
+/**
+ * ==============================
+ * SSZ Types (consensus spec)
+ * ==============================
+ */
+
+export const DepositMessageType = new ContainerType({
+  pubkey: new ByteVectorType(48),
+  withdrawalCredentials: new ByteVectorType(32),
+  amount: new UintNumberType(8),
+});
+
+export const DepositDataType = new ContainerType({
+  pubkey: new ByteVectorType(48),
+  withdrawalCredentials: new ByteVectorType(32),
+  amount: new UintNumberType(8),
+  signature: new ByteVectorType(96),
+});
+
+const ForkDataType = new ContainerType({
+  currentVersion: new ByteVectorType(4),
+  genesisValidatorsRoot: new ByteVectorType(32),
+});
+
+const SigningDataType = new ContainerType({
+  objectRoot: new ByteVectorType(32),
+  domain: new ByteVectorType(32),
+});
+
+/**
+ * Computes the signature domain per the consensus spec (compute_domain)
+ */
+export function computeDomain(
+  domainType: Uint8Array,
+  forkVersion: Uint8Array,
+  genesisValidatorsRoot: Uint8Array
+): Uint8Array {
+  const forkDataRoot = ForkDataType.hashTreeRoot({
+    currentVersion: forkVersion,
+    genesisValidatorsRoot,
+  });
+  const domain = new Uint8Array(32);
+  domain.set(domainType, 0);
+  domain.set(forkDataRoot.subarray(0, 28), 4);
+  return domain;
+}
+
+/**
+ * Computes the signing root per the consensus spec (compute_signing_root)
+ */
+export function computeSigningRoot(
+  objectRoot: Uint8Array,
+  domain: Uint8Array
+): Uint8Array {
+  return SigningDataType.hashTreeRoot({ objectRoot, domain });
+}
 
 // Available networks configuration
 export const networks: Record<string, NetworkConfig> = {
@@ -193,11 +258,10 @@ export async function generateValidatorKeys(
 ): Promise<ValidatorKeys> {
   const masterSK = deriveKeyFromMnemonic(mnemonic);
   const { signing } = deriveEth2ValidatorKeys(masterSK, index);
-  const sk = bls.SecretKey.fromBytes(signing);
-  const pubkey = sk.toPublicKey().toBytes();
+  const pubkey = blsSigs.getPublicKey(signing).toBytes();
 
   const path = `m/12381/3600/${index}/0/0`;
-  const keystore = await createKeystore(password, sk.toBytes(), pubkey, path);
+  const keystore = await createKeystore(password, signing, pubkey, path);
 
   // Create filename with path and timestamp
   const timestamp = Date.now();
@@ -285,23 +349,21 @@ export async function generateDepositData(
   // Get network configuration
   const networkConfig = getNetworkConfig(chain);
 
-  // Compute domain and create signing key
+  // Compute domain
   const domain = computeDomain(
     DOMAIN_DEPOSIT,
     networkConfig.forkVersion,
     ZERO_HASH
   );
-  const sk = bls.SecretKey.fromBytes(signing);
 
   // Create and sign deposit message
   const depositMsg = { pubkey, withdrawalCredentials, amount } as const;
-  const root = computeSigningRoot(ssz.DepositMessage, depositMsg, domain);
-  const signature = sk.sign(root).toBytes();
+  const msgRoot = DepositMessageType.hashTreeRoot(depositMsg);
+  const root = computeSigningRoot(msgRoot, domain);
+  const signature = blsSigs.sign(blsSigs.hash(root, BLS_DST), signing).toBytes();
 
-  // Compute roots
-  const depositData = { ...depositMsg, signature } as const;
-  const msgRoot = ssz.DepositMessage.hashTreeRoot(depositMsg);
-  const dataRoot = ssz.DepositData.hashTreeRoot(depositData);
+  // Compute data root
+  const dataRoot = DepositDataType.hashTreeRoot({ ...depositMsg, signature });
 
   // Return formatted deposit data
   return {
@@ -338,9 +400,9 @@ export async function verifyDepositData(
   } as const;
 
   // Compute expected roots
-  const expectMsgRoot = hex(ssz.DepositMessage.hashTreeRoot(msg));
+  const expectMsgRoot = hex(DepositMessageType.hashTreeRoot(msg));
   const expectDataRoot = hex(
-    ssz.DepositData.hashTreeRoot({ ...msg, signature: sig })
+    DepositDataType.hashTreeRoot({ ...msg, signature: sig })
   );
 
   // Compute alternative data root for verification
@@ -376,10 +438,8 @@ export async function verifyDepositData(
   }
 
   // Verify BLS signature
-  const r = computeSigningRoot(ssz.DepositMessage, msg, domain);
-  const pubkey = bls.PublicKey.fromBytes(pub);
-  const signature = bls.Signature.fromBytes(sig);
-  const isValid = signature.verify(pubkey, r);
+  const r = computeSigningRoot(DepositMessageType.hashTreeRoot(msg), domain);
+  const isValid = blsSigs.verify(sig, blsSigs.hash(r, BLS_DST), pub);
 
   // Log BLS verification details if debug is enabled
   debugLog("\n🔍 BLS Signature Verification:");

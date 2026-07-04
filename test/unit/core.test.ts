@@ -1,34 +1,35 @@
-import { describe, it, before, after } from "node:test";
 import assert from "node:assert";
 import { createHash } from "node:crypto";
+import { after, before, describe, it } from "node:test";
 
 // Import from core.js
 import {
-  // Network functions
-  networks,
+  buildWithdrawalCredentials,
+
+  // Deposit functions
+  computeDepositDataRoot,
+  computeDomain,
+
+  // Domain helpers
+  DOMAIN_DEPOSIT,
+  debugLog,
+  encodeGweiAsLittleEndian8,
+
+  // Proof utilities
+  fromHex,
   getNetworkConfig,
 
   // Utilities
   hex,
-  sha256,
   isHexAddr,
+  // Network functions
+  networks,
   parseAddress,
-  buildWithdrawalCredentials,
-  debugLog,
-
-  // Proof utilities
-  fromHex,
+  sha256,
   sha256Concat,
-  encodeGweiAsLittleEndian8,
-
-  // Deposit functions
-  computeDepositDataRoot,
   verifyDepositData,
-} from "@/core.js";
-
-// Import required dependencies to test verifyDepositData
-import { DOMAIN_DEPOSIT } from "@lodestar/params";
-import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
+  ZERO_HASH,
+} from "../../src/core.ts";
 
 // Helper function to manually create a hash for testing
 function manualSha256(...inputs: Uint8Array[]): Uint8Array {
