@@ -1,11 +1,13 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --experimental-strip-types
 
 /**
  * Command Line Interface for Ethereum 2.0 deposit tool
  */
 
+import { realpathSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 // Node.js built-in imports
 import { parseArgs } from "node:util";
 
@@ -153,8 +155,11 @@ export async function main(): Promise<void> {
   console.log(`🔑  Keystores are in ${values.out}\n`);
 }
 
-// Run the CLI if this is the main module
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run the CLI if this is the main module (realpath survives the npm bin symlink)
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
+) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);
