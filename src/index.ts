@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node --experimental-strip-types
 
 /**
- * Ethereum 2.0 deposit-cli replacement for Node.js 23 and TypeScript
+ * Ethereum 2.0 deposit-cli replacement for Node.js 24 and TypeScript
  */
 
 

@@ -23,7 +23,7 @@ The tests cover:
 
 ### Coverage Report
 
-The project uses Node.js 23's built-in test coverage functionality. To generate a coverage report:
+The project uses Node.js 24's built-in test coverage functionality. To generate a coverage report:
 
 ```bash
 npm run test:coverage
