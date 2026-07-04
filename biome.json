@@ -11,5 +11,13 @@
     "rules": {
       "recommended": true
     }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   }
 }
