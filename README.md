@@ -1,3 +1,5 @@
+<img alt="1.0.0" src="https://github.com/user-attachments/assets/f50937ab-3453-47bb-ab0d-9d718846fdf3" />
+
 # Depositor
 
 Generates Ethereum validator keystores and `deposit_data-*.json` from a BIP-39 mnemonic. A one-command replacement for `staking-deposit-cli` on testnets.
