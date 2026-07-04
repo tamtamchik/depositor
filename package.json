@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "depositor": "./dist/bin.mjs"
+    "depositor": "dist/bin.mjs"
   },
   "files": [
     "dist"
