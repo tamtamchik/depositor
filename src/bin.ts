@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --experimental-strip-types
+#!/usr/bin/env node
 
 /**
  * npm bin entrypoint: unconditionally runs the CLI

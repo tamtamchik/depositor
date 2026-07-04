@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "depositor": "dist/bin.mjs"
+    "depositor": "./dist/bin.mjs"
   },
   "files": [
     "dist"
@@ -28,7 +28,7 @@
   "scripts": {
     "start": "node --experimental-strip-types src/index.ts",
     "generate": "node --experimental-strip-types src/index.ts",
-    "build": "tsdown src/index.ts src/bin.ts --format esm --dts --platform node",
+    "build": "tsdown src/index.ts src/bin.ts --format esm --dts --platform node --out-dir dist",
     "test": "node --experimental-strip-types --test test/**/*.ts",
     "test:coverage": "node --experimental-strip-types --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info test/**/*.ts",
     "lint": "biome check . && tsc --noEmit",
