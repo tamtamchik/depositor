@@ -78,7 +78,7 @@ describe("Spec compliance", () => {
         "0x" + GOLDEN_HOODI.pubkey,
         "0x" + GOLDEN_HOODI.withdrawal_credentials,
         "0x" + GOLDEN_HOODI.signature,
-        32n
+        32_000_000_000n
       );
       assert.strictEqual(root.slice(2), GOLDEN_HOODI.deposit_data_root);
     });
@@ -117,7 +117,7 @@ describe("Spec compliance", () => {
         deposit.pubkey,
         deposit.withdrawal_credentials,
         deposit.signature,
-        32n
+        32_000_000_000n
       ).slice(2);
 
       assert.strictEqual(deposit.deposit_data_root, sszRoot);
@@ -186,6 +186,40 @@ describe("Spec compliance", () => {
         "hoodi"
       );
       assert.strictEqual(deposit.amount, ONE_ETH_GWEI.toString());
+      const isValid = await verifyDepositData(deposit, domainFor("hoodi"));
+      assert.strictEqual(isValid, true);
+    });
+
+    it("accepts fractional ETH amounts", async () => {
+      const { signing, pubkey } = await generateValidatorKeys(
+        TEST_MNEMONIC,
+        0,
+        TEST_PASSWORD,
+        TEST_DIR
+      );
+      const wc = buildWithdrawalCredentials(
+        2,
+        pubkey,
+        "0x1234567890123456789012345678901234567890"
+      );
+      const amount = 1.5 * ONE_ETH_GWEI;
+      const deposit = await generateDepositData(
+        pubkey,
+        signing,
+        wc,
+        amount,
+        "hoodi"
+      );
+      assert.strictEqual(deposit.amount, "1500000000");
+
+      const manualRoot = computeDepositDataRoot(
+        deposit.pubkey,
+        deposit.withdrawal_credentials,
+        deposit.signature,
+        deposit.amount
+      ).slice(2);
+      assert.strictEqual(manualRoot, deposit.deposit_data_root);
+
       const isValid = await verifyDepositData(deposit, domainFor("hoodi"));
       assert.strictEqual(isValid, true);
     });

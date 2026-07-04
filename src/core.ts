@@ -305,18 +305,15 @@ export function computeDepositDataRoot(
   pubkey: string,
   withdrawalCredentials: string,
   signature: string,
-  amountETH: bigint | string
+  amountGwei: bigint | string
 ): string {
   // Convert inputs to bytes
   const pubkeyBytes = fromHex(pubkey);
   const withdrawalCredentialsBytes = fromHex(withdrawalCredentials);
   const signatureBytes = fromHex(signature);
 
-  // Convert amount to Gwei and encode as little-endian
-  const amountGwei =
-    (typeof amountETH !== "bigint" ? BigInt(amountETH) : amountETH) *
-    1_000_000_000n;
-  const amountLE64 = encodeGweiAsLittleEndian8(amountGwei);
+  // Encode amount as little-endian
+  const amountLE64 = encodeGweiAsLittleEndian8(BigInt(amountGwei));
 
   // Compute hash tree root components
   const pubkeyRoot = sha256Concat(pubkeyBytes, new Uint8Array(16));
@@ -410,7 +407,7 @@ export async function verifyDepositData(
     "0x" + depositData.pubkey,
     "0x" + depositData.withdrawal_credentials,
     "0x" + depositData.signature,
-    BigInt(depositData.amount) / 1_000_000_000n
+    depositData.amount
   ).slice(2);
 
   // Log verification details if debug is enabled

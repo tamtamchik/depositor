@@ -398,13 +398,13 @@ describe("Core", () => {
           "0x0100000000000000000000001234567890123456789012345678901234567890";
         const signature =
           "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
-        const amountETH = "32";
+        const amountGwei = "32000000000";
 
         const root = computeDepositDataRoot(
           pubkey,
           withdrawalCredentials,
           signature,
-          amountETH
+          amountGwei
         );
 
         // The output of computeDepositDataRoot should be a hex string with 0x prefix
@@ -421,13 +421,13 @@ describe("Core", () => {
           "0x0100000000000000000000001234567890123456789012345678901234567890";
         const signature =
           "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
-        const amountETH = 32n;
+        const amountGwei = 32_000_000_000n;
 
         const root = computeDepositDataRoot(
           pubkey,
           withdrawalCredentials,
           signature,
-          amountETH
+          amountGwei
         );
 
         // The output of computeDepositDataRoot should be a hex string with 0x prefix
@@ -444,20 +444,20 @@ describe("Core", () => {
           "0x0100000000000000000000001234567890123456789012345678901234567890";
         const signature =
           "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
-        const amountETH = "32";
+        const amountGwei = "32000000000";
 
         const root1 = computeDepositDataRoot(
           pubkey,
           withdrawalCredentials,
           signature,
-          amountETH
+          amountGwei
         );
 
         const root2 = computeDepositDataRoot(
           pubkey,
           withdrawalCredentials,
           signature,
-          amountETH
+          amountGwei
         );
 
         assert.strictEqual(
