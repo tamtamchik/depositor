@@ -7,7 +7,7 @@ Generates Ethereum validator keystores and `deposit_data-*.json` from a BIP-39 m
 
 ## Requirements
 
-Node.js 23 or newer. No build step: the npm scripts run TypeScript through Node's native type stripping.
+Node.js 24 or newer. No build step: the npm scripts run TypeScript through Node's native type stripping.
 
 ## Quick start
 
