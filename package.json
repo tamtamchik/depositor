@@ -3,12 +3,19 @@
   "version": "1.0.0",
   "description": "CLI tool for generating Ethereum validator deposit_data and keystore files on testnets",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
   "bin": {
-    "depositor": "src/cli.ts"
+    "depositor": "dist/bin.mjs"
   },
   "files": [
-    "src"
+    "dist"
   ],
   "repository": {
     "type": "git",
@@ -21,11 +28,11 @@
   "scripts": {
     "start": "node --experimental-strip-types src/index.ts",
     "generate": "node --experimental-strip-types src/index.ts",
-    "build": "tsc --project tsconfig.json",
+    "build": "tsdown src/index.ts src/bin.ts --format esm --dts --platform node",
     "test": "node --experimental-strip-types --test test/**/*.ts",
     "test:coverage": "node --experimental-strip-types --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info test/**/*.ts",
     "lint": "biome check . && tsc --noEmit",
-    "prepublishOnly": "npm run lint && npm test"
+    "prepublishOnly": "npm run lint && npm test && npm run build"
   },
   "keywords": [
     "ethereum",
@@ -43,6 +50,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
     "@types/node": "^24.13.2",
+    "tsdown": "^0.22.3",
     "typescript": "^5.9.3"
   },
   "overrides": {
