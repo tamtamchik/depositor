@@ -1,34 +1,35 @@
-import { describe, it, before, after } from "node:test";
 import assert from "node:assert";
 import { createHash } from "node:crypto";
+import { after, before, describe, it } from "node:test";
 
 // Import from core.js
 import {
-  // Network functions
-  networks,
+  buildWithdrawalCredentials,
+
+  // Deposit functions
+  computeDepositDataRoot,
+  computeDomain,
+
+  // Domain helpers
+  DOMAIN_DEPOSIT,
+  debugLog,
+  encodeGweiAsLittleEndian8,
+
+  // Proof utilities
+  fromHex,
   getNetworkConfig,
 
   // Utilities
   hex,
-  sha256,
   isHexAddr,
+  // Network functions
+  networks,
   parseAddress,
-  buildWithdrawalCredentials,
-  debugLog,
-
-  // Proof utilities
-  fromHex,
+  sha256,
   sha256Concat,
-  encodeGweiAsLittleEndian8,
-
-  // Deposit functions
-  computeDepositDataRoot,
   verifyDepositData,
-} from "@/core.js";
-
-// Import required dependencies to test verifyDepositData
-import { DOMAIN_DEPOSIT } from "@lodestar/params";
-import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
+  ZERO_HASH,
+} from "../../src/core.ts";
 
 // Helper function to manually create a hash for testing
 function manualSha256(...inputs: Uint8Array[]): Uint8Array {
@@ -397,13 +398,13 @@ describe("Core", () => {
           "0x0100000000000000000000001234567890123456789012345678901234567890";
         const signature =
           "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
-        const amountETH = "32";
+        const amountGwei = "32000000000";
 
         const root = computeDepositDataRoot(
           pubkey,
           withdrawalCredentials,
           signature,
-          amountETH
+          amountGwei
         );
 
         // The output of computeDepositDataRoot should be a hex string with 0x prefix
@@ -420,13 +421,13 @@ describe("Core", () => {
           "0x0100000000000000000000001234567890123456789012345678901234567890";
         const signature =
           "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
-        const amountETH = 32n;
+        const amountGwei = 32_000_000_000n;
 
         const root = computeDepositDataRoot(
           pubkey,
           withdrawalCredentials,
           signature,
-          amountETH
+          amountGwei
         );
 
         // The output of computeDepositDataRoot should be a hex string with 0x prefix
@@ -443,20 +444,20 @@ describe("Core", () => {
           "0x0100000000000000000000001234567890123456789012345678901234567890";
         const signature =
           "0x1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234";
-        const amountETH = "32";
+        const amountGwei = "32000000000";
 
         const root1 = computeDepositDataRoot(
           pubkey,
           withdrawalCredentials,
           signature,
-          amountETH
+          amountGwei
         );
 
         const root2 = computeDepositDataRoot(
           pubkey,
           withdrawalCredentials,
           signature,
-          amountETH
+          amountGwei
         );
 
         assert.strictEqual(
@@ -482,7 +483,8 @@ describe("Core", () => {
         deposit_data_root:
           "0000000000000000000000000000000000000000000000000000000000000000",
         network_name: "mainnet",
-        deposit_cli_version: "node23-tsx",
+        deposit_cli_version: "depositor-cli",
+        fork_version: "00000000",
       };
 
       // Create a domain for verification

@@ -1,32 +1,31 @@
-#!/usr/bin/env -S tsx
+#!/usr/bin/env -S node --experimental-strip-types
 
 /**
  * Command Line Interface for Ethereum 2.0 deposit tool
  */
 
-// Node.js built-in imports
-import { parseArgs } from "node:util";
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { realpathSync } from "node:fs";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { parseArgs } from "node:util";
 
-// External package imports
 import * as bip39 from "@scure/bip39";
-import { wordlist as english } from "@scure/bip39/wordlists/english";
-import { computeDomain, ZERO_HASH } from "@lodestar/state-transition";
-import { DOMAIN_DEPOSIT } from "@lodestar/params";
-
-// Local imports
-import type { CliOptions, WithdrawalCredentialsType } from "./types.js";
+import { wordlist as english } from "@scure/bip39/wordlists/english.js";
 import {
-  ONE_ETH_GWEI,
-  getNetworkConfig,
   buildWithdrawalCredentials,
-  generateValidatorKeys,
-  getValidatorInfo,
-  generateDepositData,
-  verifyDepositData,
+  computeDomain,
+  DOMAIN_DEPOSIT,
   debugLog,
-} from "./core.js";
+  generateDepositData,
+  generateValidatorKeys,
+  getNetworkConfig,
+  getValidatorInfo,
+  ONE_ETH_GWEI,
+  verifyDepositData,
+  ZERO_HASH,
+} from "./core.ts";
+import type { CliOptions, WithdrawalCredentialsType } from "./types.ts";
 
 /**
  * Main CLI function
@@ -153,8 +152,11 @@ export async function main(): Promise<void> {
   console.log(`🔑  Keystores are in ${values.out}\n`);
 }
 
-// Run the CLI if this is the main module
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run the CLI if this is the main module (realpath survives the npm bin symlink)
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
+) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);

@@ -5,7 +5,8 @@ jspm_packages/
 # Output directories
 dist/
 build/
-validator_keys/
+validator_keys/*
+validator_keys.*
 
 # TypeScript cache
 *.tsbuildinfo
@@ -43,3 +44,5 @@ coverage/
 # OS files
 .DS_Store
 Thumbs.db
+# Test coverage output
+lcov.info
