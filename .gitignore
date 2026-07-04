@@ -5,7 +5,8 @@ jspm_packages/
 # Output directories
 dist/
 build/
-validator_keys/
+validator_keys/*
+validator_keys.*
 
 # TypeScript cache
 *.tsbuildinfo

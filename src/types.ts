@@ -21,6 +21,7 @@ export interface DepositData {
   deposit_data_root: string;
   network_name: string;
   deposit_cli_version: string;
+  fork_version: string;
 }
 
 // Validator key information

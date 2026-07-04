@@ -312,7 +312,8 @@ export async function generateDepositData(
     deposit_message_root: hex(msgRoot),
     deposit_data_root: hex(dataRoot),
     network_name: chain,
-    deposit_cli_version: "node23-tsx",
+    deposit_cli_version: "depositor-cli",
+    fork_version: hex(networkConfig.forkVersion),
   };
 }
 
