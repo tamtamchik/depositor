@@ -1,5 +1,5 @@
 {
-  "name": "depositor",
+  "name": "@tamtamchik/depositor",
   "version": "1.0.0",
   "description": "CLI tool for generating Ethereum validator deposit_data and keystore files on testnets",
   "type": "module",
@@ -63,5 +63,8 @@
     "@chainsafe/ssz": "^1.6.0",
     "@noble/curves": "^2.2.0",
     "@scure/bip39": "^2.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

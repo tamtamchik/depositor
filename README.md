@@ -12,6 +12,15 @@ Node.js 24 or newer. No build step: the npm scripts run TypeScript through Node'
 ## Quick start
 
 ```bash
+npx @tamtamchik/depositor \
+  --wc-address=0xYourWithdrawalAddress \
+  --chain=hoodi \
+  --password=YourKeystorePassword
+```
+
+Or from source:
+
+```bash
 git clone https://github.com/tamtamchik/depositor.git
 cd depositor
 npm install
@@ -81,6 +90,8 @@ With `--verify` (on by default) the tool re-reads the written file and checks ev
 
 ## Library usage
 
+`npm install @tamtamchik/depositor`
+
 ```typescript
 import {
   generateValidatorKeys,
@@ -91,7 +102,7 @@ import {
   computeDomain,
   ZERO_HASH,
   DOMAIN_DEPOSIT,
-} from "./src/core.ts";
+} from "@tamtamchik/depositor";
 
 const { signing, pubkey } = await generateValidatorKeys(
   "your mnemonic phrase",
