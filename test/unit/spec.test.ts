@@ -75,9 +75,9 @@ describe("Spec compliance", () => {
 
     it("matches manual merkleization of the deposit data root", () => {
       const root = computeDepositDataRoot(
-        "0x" + GOLDEN_HOODI.pubkey,
-        "0x" + GOLDEN_HOODI.withdrawal_credentials,
-        "0x" + GOLDEN_HOODI.signature,
+        `0x${GOLDEN_HOODI.pubkey}`,
+        `0x${GOLDEN_HOODI.withdrawal_credentials}`,
+        `0x${GOLDEN_HOODI.signature}`,
         32_000_000_000n
       );
       assert.strictEqual(root.slice(2), GOLDEN_HOODI.deposit_data_root);

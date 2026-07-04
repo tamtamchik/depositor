@@ -8,10 +8,8 @@ import { realpathSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-// Node.js built-in imports
 import { parseArgs } from "node:util";
 
-// External package imports
 import * as bip39 from "@scure/bip39";
 import { wordlist as english } from "@scure/bip39/wordlists/english.js";
 import {
@@ -27,7 +25,6 @@ import {
   verifyDepositData,
   ZERO_HASH,
 } from "./core.ts";
-// Local imports
 import type { CliOptions, WithdrawalCredentialsType } from "./types.ts";
 
 /**

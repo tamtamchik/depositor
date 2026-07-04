@@ -2,7 +2,6 @@
  * Core functionality for Ethereum 2.0 validator deposit generation
  */
 
-// Node.js built-in imports
 import { createHash } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -11,7 +10,6 @@ import {
   deriveKeyFromMnemonic,
 } from "@chainsafe/bls-keygen";
 import { create as createKeystore } from "@chainsafe/bls-keystore";
-// External package imports
 import {
   ByteVectorType,
   ContainerType,
@@ -20,8 +18,6 @@ import {
   UintNumberType,
 } from "@chainsafe/ssz";
 import { bls12_381 } from "@noble/curves/bls12-381.js";
-
-// Local imports
 import type {
   DepositData,
   NetworkConfig,
@@ -189,7 +185,7 @@ export const fromHex = (hex: string): Uint8Array => {
 
   // Pad odd-length hex strings with a leading zero
   if (hex.length % 2 !== 0) {
-    hex = "0" + hex;
+    hex = `0${hex}`;
   }
 
   const bytes = new Uint8Array(hex.length / 2);
@@ -330,7 +326,7 @@ export function computeDepositDataRoot(
   const part2 = sha256Concat(amountLE64, new Uint8Array(24), signatureRoot);
   const depositDataRoot = sha256Concat(part1, part2);
 
-  return "0x" + Buffer.from(depositDataRoot).toString("hex");
+  return `0x${Buffer.from(depositDataRoot).toString("hex")}`;
 }
 
 /**
@@ -384,9 +380,9 @@ export async function verifyDepositData(
   domain: Uint8Array
 ): Promise<boolean> {
   // Convert hex strings to bytes
-  const pub = fromHexString("0x" + depositData.pubkey);
-  const wc = fromHexString("0x" + depositData.withdrawal_credentials);
-  const sig = fromHexString("0x" + depositData.signature);
+  const pub = fromHexString(`0x${depositData.pubkey}`);
+  const wc = fromHexString(`0x${depositData.withdrawal_credentials}`);
+  const sig = fromHexString(`0x${depositData.signature}`);
   const amount = Number(depositData.amount);
 
   // Create deposit message
@@ -404,9 +400,9 @@ export async function verifyDepositData(
 
   // Compute alternative data root for verification
   const altDataRoot = computeDepositDataRoot(
-    "0x" + depositData.pubkey,
-    "0x" + depositData.withdrawal_credentials,
-    "0x" + depositData.signature,
+    `0x${depositData.pubkey}`,
+    `0x${depositData.withdrawal_credentials}`,
+    `0x${depositData.signature}`,
     depositData.amount
   ).slice(2);
 
