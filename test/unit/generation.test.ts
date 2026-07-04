@@ -211,8 +211,13 @@ describe("Validator and Deposit Generation", () => {
       );
       assert.strictEqual(
         depositData.deposit_cli_version,
-        "node23-tsx",
+        "depositor-cli",
         "deposit_cli_version should be set"
+      );
+      assert.strictEqual(
+        depositData.fork_version,
+        "00000000",
+        "fork_version should match mainnet genesis fork version"
       );
     });
 

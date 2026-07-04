@@ -482,7 +482,8 @@ describe("Core", () => {
         deposit_data_root:
           "0000000000000000000000000000000000000000000000000000000000000000",
         network_name: "mainnet",
-        deposit_cli_version: "node23-tsx",
+        deposit_cli_version: "depositor-cli",
+        fork_version: "00000000",
       };
 
       // Create a domain for verification
