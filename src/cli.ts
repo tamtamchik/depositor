@@ -1,4 +1,4 @@
-#!/usr/bin/env -S tsx
+#!/usr/bin/env node
 
 /**
  * Command Line Interface for Ethereum 2.0 deposit tool

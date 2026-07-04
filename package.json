@@ -1,16 +1,31 @@
 {
   "name": "depositor",
   "version": "1.0.0",
-  "description": "CLI tool for generating Ethereum 2.0 deposit_data and keystore files (Node 23 + tsx)",
+  "description": "CLI tool for generating Ethereum validator deposit_data and keystore files on testnets",
   "type": "module",
   "main": "src/index.ts",
+  "bin": {
+    "depositor": "src/cli.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tamtamchik/depositor.git"
+  },
+  "homepage": "https://github.com/tamtamchik/depositor#readme",
+  "bugs": {
+    "url": "https://github.com/tamtamchik/depositor/issues"
+  },
   "scripts": {
     "start": "node --experimental-strip-types src/index.ts",
     "generate": "node --experimental-strip-types src/index.ts",
     "build": "tsc --project tsconfig.json",
     "test": "node --experimental-strip-types --test test/**/*.ts",
     "test:coverage": "node --experimental-strip-types --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info test/**/*.ts",
-    "lint": "biome check . && tsc --noEmit"
+    "lint": "biome check . && tsc --noEmit",
+    "prepublishOnly": "npm run lint && npm test"
   },
   "keywords": [
     "ethereum",
@@ -20,8 +35,8 @@
     "bls",
     "validator"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Yuri Tkachenko <yuri.tam.tkachenko@gmail.com>",
+  "license": "MIT",
   "engines": {
     "node": ">=23"
   },

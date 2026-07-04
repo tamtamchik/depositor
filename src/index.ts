@@ -1,4 +1,4 @@
-#!/usr/bin/env -S tsx
+#!/usr/bin/env node
 
 /**
  * Ethereum 2.0 deposit-cli replacement for Node.js 23 and TypeScript
