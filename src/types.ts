@@ -46,4 +46,5 @@ export interface CliOptions {
   verify: boolean;
   amount: string;
   debug?: boolean;
+  "allow-mainnet"?: boolean;
 }

@@ -1,93 +1,94 @@
 import assert from "node:assert";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it } from "node:test";
-import { parseArgs } from "node:util";
+
+import { main } from "../../src/cli.ts";
+
+const TEST_MNEMONIC =
+  "test test test test test test test test test test test junk";
+const TEST_PASSWORD = "TestPassword123";
+
+async function withArgv(args: string[], fn: () => Promise<void>) {
+  const originalArgv = process.argv;
+  process.argv = ["node", "depositor", ...args];
+  try {
+    await fn();
+  } finally {
+    process.argv = originalArgv;
+  }
+}
+
+async function withMutedConsole(fn: () => Promise<void>) {
+  const originalLog = console.log;
+  console.log = () => {};
+  try {
+    await fn();
+  } finally {
+    console.log = originalLog;
+  }
+}
 
 describe("CLI", () => {
-  describe("CLI argument parsing", () => {
-    it("should parse arguments correctly", () => {
-      // Mock process.argv
-      const originalArgv = process.argv;
-      process.argv = [
-        "node",
-        "script.js",
-        "--validators=3",
-        "--wc-type=1",
-        "--wc-address=0x1234567890123456789012345678901234567890",
-        "--chain=sepolia",
-        "--amount=5",
-        "--out=./test_keys",
-      ];
+  it("generates hoodi deposit data by default", async () => {
+    const outputDir = await mkdtemp(join(tmpdir(), "depositor-cli-"));
 
-      // We're testing parseArgs behavior when called with our expected options
-      const { values } = parseArgs({
-        options: {
-          mnemonic: { type: "string" },
-          validators: { type: "string", default: "1" },
-          "wc-type": { type: "string", default: "1" },
-          "wc-address": { type: "string" },
-          chain: { type: "string", default: "mainnet" },
-          password: { type: "string" },
-          out: { type: "string", default: "./validator_keys" },
-          verify: { type: "boolean", default: true },
-          amount: { type: "string", default: "32" },
-          debug: { type: "boolean", default: false },
-        },
-        allowPositionals: true,
-      });
-
-      // Restore original process.argv
-      process.argv = originalArgv;
-
-      // Assertions
-      assert.strictEqual(values.validators, "3");
-      assert.strictEqual(values["wc-type"], "1");
-      assert.strictEqual(
-        values["wc-address"],
-        "0x1234567890123456789012345678901234567890"
+    try {
+      await withMutedConsole(() =>
+        withArgv(
+          [
+            `--mnemonic=${TEST_MNEMONIC}`,
+            `--password=${TEST_PASSWORD}`,
+            "--wc-type=0",
+            `--out=${outputDir}`,
+          ],
+          main
+        )
       );
-      assert.strictEqual(values.chain, "sepolia");
-      assert.strictEqual(values.amount, "5");
-      assert.strictEqual(values.out, "./test_keys");
-      assert.strictEqual(values.password, undefined);
-      assert.strictEqual(values.verify, true);
-    });
 
-    it("should apply default values for missing arguments", () => {
-      // Mock process.argv with minimal arguments
-      const originalArgv = process.argv;
-      process.argv = ["node", "script.js", "--password=TestPassword"];
+      const files = await readdir(outputDir);
+      const depositDataFile = files.find((file) =>
+        file.startsWith("deposit_data-")
+      );
+      assert(depositDataFile, "deposit data file should be written");
 
-      // Parse with our expected options
-      const { values } = parseArgs({
-        options: {
-          mnemonic: { type: "string" },
-          validators: { type: "string", default: "1" },
-          "wc-type": { type: "string", default: "1" },
-          "wc-address": { type: "string" },
-          chain: { type: "string", default: "mainnet" },
-          password: { type: "string" },
-          out: { type: "string", default: "./validator_keys" },
-          verify: { type: "boolean", default: true },
-          amount: { type: "string", default: "32" },
-          debug: { type: "boolean", default: false },
-        },
-        allowPositionals: true,
-      });
+      const depositData = JSON.parse(
+        await readFile(join(outputDir, depositDataFile), "utf8")
+      );
+      assert.strictEqual(depositData.length, 1);
+      assert.strictEqual(depositData[0].network_name, "hoodi");
+    } finally {
+      await rm(outputDir, { recursive: true, force: true });
+    }
+  });
 
-      // Restore original process.argv
-      process.argv = originalArgv;
+  it("rejects mainnet unless explicitly allowed", async () => {
+    const outputDir = join(tmpdir(), "depositor-cli-mainnet");
 
-      // Check default values
-      assert.strictEqual(values.validators, "1");
-      assert.strictEqual(values["wc-type"], "1");
-      assert.strictEqual(values.chain, "mainnet");
-      assert.strictEqual(values.password, "TestPassword");
-      assert.strictEqual(values.out, "./validator_keys");
-      assert.strictEqual(values.verify, true);
-      assert.strictEqual(values.amount, "32");
-      assert.strictEqual(values.debug, false);
-      assert.strictEqual(values.mnemonic, undefined); // Optional with no default
-      assert.strictEqual(values["wc-address"], undefined); // Optional with no default
+    await withArgv(
+      [
+        `--mnemonic=${TEST_MNEMONIC}`,
+        `--password=${TEST_PASSWORD}`,
+        "--wc-type=0",
+        "--chain=mainnet",
+        `--out=${outputDir}`,
+      ],
+      async () => {
+        await assert.rejects(
+          main(),
+          /--chain=mainnet requires --allow-mainnet/
+        );
+      }
+    );
+  });
+
+  it("requires a keystore password", async () => {
+    await withArgv(["--wc-type=0"], async () => {
+      await assert.rejects(
+        main(),
+        /--password is required for keystore generation/
+      );
     });
   });
 });

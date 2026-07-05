@@ -5,7 +5,7 @@
 Generates Ethereum validator keystores and `deposit_data-*.json` from a BIP-39 mnemonic. A one-command replacement for `staking-deposit-cli` on testnets.
 
 > [!IMPORTANT]
-> **Testnets only.** The tool prints the mnemonic and validator signing keys to stdout. Never point it at real mainnet funds.
+> **Testnets only.** The tool prints the mnemonic and validator signing keys to stdout. The CLI refuses `--chain=mainnet` without `--allow-mainnet`. That flag only removes the guardrail. It does not make the tool safe for production mainnet funds.
 
 ## Requirements
 
@@ -41,18 +41,19 @@ Save the mnemonic. It is the only way to regenerate the keys.
 
 ## Options
 
-| Option         | Description                                                       | Default            |
-| -------------- | ----------------------------------------------------------------- | ------------------ |
-| `--mnemonic`   | BIP-39 phrase to derive keys from; omit to generate a new one     | generated          |
-| `--validators` | Number of validators to generate                                  | `1`                |
-| `--wc-type`    | Withdrawal credentials: `0` BLS, `1` ETH address, `2` compounding | `1`                |
-| `--wc-address` | Withdrawal address, required for `--wc-type` 1 and 2              |                    |
-| `--chain`      | `mainnet`, `sepolia`, or `hoodi`                                  | `mainnet`          |
-| `--password`   | Keystore encryption password, required                            |                    |
-| `--amount`     | Deposit size in ETH per validator                                 | `32`               |
-| `--out`        | Output directory                                                  | `./validator_keys` |
-| `--verify`     | Re-check roots and signatures after generation                    | `true`             |
-| `--debug`      | Log intermediate values                                           | `false`            |
+| Option             | Description                                                       | Default            |
+| ------------------ | ----------------------------------------------------------------- | ------------------ |
+| `--mnemonic`       | BIP-39 phrase to derive keys from; omit to generate a new one     | generated          |
+| `--validators`     | Number of validators to generate                                  | `1`                |
+| `--wc-type`        | Withdrawal credentials: `0` BLS, `1` ETH address, `2` compounding | `1`                |
+| `--wc-address`     | Withdrawal address, required for `--wc-type` 1 and 2              |                    |
+| `--chain`          | `mainnet`, `sepolia`, or `hoodi`                                  | `hoodi`            |
+| `--password`       | Keystore encryption password, required                            |                    |
+| `--amount`         | Deposit size in ETH per validator                                 | `32`               |
+| `--out`            | Output directory                                                  | `./validator_keys` |
+| `--verify`         | Re-check roots and signatures after generation                    | `true`             |
+| `--debug`          | Log intermediate values                                           | `false`            |
+| `--allow-mainnet`  | Allow `--chain=mainnet` despite stdout secret logging             | `false`            |
 
 Keys follow the EIP-2334 path `m/12381/3600/<index>/0/0`, so the same mnemonic and index always yield the same validator.
 

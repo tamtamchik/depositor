@@ -37,12 +37,13 @@ export async function main(): Promise<void> {
       validators: { type: "string", default: "1" },
       "wc-type": { type: "string", default: "1" },
       "wc-address": { type: "string" },
-      chain: { type: "string", default: "mainnet" },
+      chain: { type: "string", default: "hoodi" },
       password: { type: "string" },
       out: { type: "string", default: "./validator_keys" },
       verify: { type: "boolean", default: true },
       amount: { type: "string", default: "32" },
       debug: { type: "boolean", default: false },
+      "allow-mainnet": { type: "boolean", default: false },
     },
     allowPositionals: true,
   }) as { values: CliOptions };
@@ -60,6 +61,7 @@ export async function main(): Promise<void> {
   debugLog(`Withdrawal credentials type: ${values["wc-type"]}`);
   debugLog(`Withdrawal address: ${values["wc-address"] || "not provided"}`);
   debugLog(`Chain: ${values.chain}`);
+  debugLog(`Allow mainnet: ${values["allow-mainnet"]}`);
   debugLog(`Output directory: ${values.out}`);
   debugLog(`Verify: ${values.verify}`);
   debugLog(
@@ -73,6 +75,13 @@ export async function main(): Promise<void> {
   const NUM = Number(values.validators);
   const AMOUNT = Number(values.amount) * ONE_ETH_GWEI;
   const WC_TYPE = Number(values["wc-type"]) as WithdrawalCredentialsType;
+  const chain = values.chain.toLowerCase();
+
+  if (chain === "mainnet" && !values["allow-mainnet"]) {
+    throw new Error(
+      "--chain=mainnet requires --allow-mainnet because this CLI prints validator secrets"
+    );
+  }
 
   // Validate withdrawal credential type
   if (![0, 1, 2].includes(WC_TYPE))
@@ -90,7 +99,7 @@ export async function main(): Promise<void> {
   console.log(`\n📝  Mnemonic: ${mnemonic}\n`);
 
   // Get network configuration
-  const networkConfig = getNetworkConfig(values.chain);
+  const networkConfig = getNetworkConfig(chain);
   const domain = computeDomain(
     DOMAIN_DEPOSIT,
     networkConfig.forkVersion,
@@ -125,7 +134,7 @@ export async function main(): Promise<void> {
       signing,
       withdrawalCredentials,
       AMOUNT,
-      values.chain
+      chain
     );
 
     depositDataArray.push(depositData);
