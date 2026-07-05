@@ -5,7 +5,7 @@
 Generates Ethereum validator keystores and `deposit_data-*.json` from a BIP-39 mnemonic. A one-command replacement for `staking-deposit-cli` on testnets.
 
 > [!IMPORTANT]
-> **Testnets only.** The tool prints the mnemonic and validator signing keys to stdout. The CLI refuses `--chain=mainnet` unless `--allow-mainnet` is passed; that flag only removes the guardrail and does not make the tool safe for production mainnet funds.
+> **Testnets only.** The tool prints the mnemonic and validator signing keys to stdout. The CLI refuses `--chain=mainnet` without `--allow-mainnet`. That flag only removes the guardrail. It does not make the tool safe for production mainnet funds.
 
 ## Requirements
 
