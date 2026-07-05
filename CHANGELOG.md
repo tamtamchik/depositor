@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1 — 2026-07-05
+
+- Default CLI generation now targets hoodi instead of mainnet.
+- `--chain=mainnet` now requires explicit `--allow-mainnet`.
+- Added security reporting and stdout secret-handling notes.
+- CI now verifies the build output and dry-run npm package contents.
+- CLI tests now exercise the real `main()` path.
+
 ## 1.0.0 — 2026-07-04
 
 First release.

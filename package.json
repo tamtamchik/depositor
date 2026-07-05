@@ -1,6 +1,6 @@
 {
   "name": "@tamtamchik/depositor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CLI tool for generating Ethereum validator deposit_data and keystore files on testnets",
   "type": "module",
   "main": "./dist/index.mjs",
