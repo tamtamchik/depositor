@@ -2,6 +2,11 @@
 
 # Depositor
 
+[![Latest Version on NPM][ico-version]][link-npm]
+[![TypeScript][ico-types]][link-npm]
+[![Software License][ico-license]](LICENSE)
+[![Total Downloads][ico-downloads]][link-downloads]
+
 Generates Ethereum validator keystores and `deposit_data-*.json` from a BIP-39 mnemonic. A one-command replacement for `staking-deposit-cli` on testnets.
 
 > [!IMPORTANT]
@@ -145,3 +150,15 @@ npm run build         # emit dist/
 ## License
 
 MIT
+
+[![Buy Me A Coffee][ico-coffee]][link-coffee]
+
+[ico-coffee]: https://img.shields.io/badge/Buy%20Me%20A-Coffee-%236F4E37.svg?style=flat-square
+[ico-version]: https://img.shields.io/npm/v/@tamtamchik/depositor.svg?style=flat-square
+[ico-license]: https://img.shields.io/npm/l/@tamtamchik/depositor.svg?style=flat-square
+[ico-downloads]: https://img.shields.io/npm/dt/@tamtamchik/depositor.svg?style=flat-square
+[ico-types]: https://img.shields.io/npm/types/@tamtamchik/depositor.svg?style=flat-square
+
+[link-coffee]: https://www.buymeacoffee.com/tamtamchik
+[link-npm]: https://www.npmjs.com/package/@tamtamchik/depositor
+[link-downloads]: https://www.npmjs.com/package/@tamtamchik/depositor
