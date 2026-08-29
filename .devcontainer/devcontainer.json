@@ -1,0 +1,15 @@
+{
+  "name": "Depositor",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:24-bookworm",
+  "remoteUser": "node",
+  "updateContentCommand": "npm ci --ignore-scripts",
+  "customizations": {
+    "vscode": {
+      "extensions": ["biomejs.biome"],
+      "settings": {
+        "js/ts.tsdk.path": "node_modules/typescript/lib",
+        "editor.formatOnSave": false
+      }
+    }
+  }
+}
