@@ -27,6 +27,41 @@ import {
 } from "./core.ts";
 import type { CliOptions, WithdrawalCredentialsType } from "./types.ts";
 
+function parseValidatorCount(value: string): number {
+  const validators = Number(value);
+  if (!Number.isSafeInteger(validators) || validators < 1) {
+    throw new Error("--validators must be a positive integer");
+  }
+  return validators;
+}
+
+function parseAmountGwei(value: string): number {
+  if (!/^(?:\d+|\d+\.\d+|\.\d+)$/.test(value)) {
+    throw new Error(
+      "--amount must be a positive ETH amount with at most 9 decimal places"
+    );
+  }
+
+  const [whole = "0", fraction = ""] = value.split(".");
+  if (fraction.length > 9) {
+    throw new Error(
+      "--amount must be a positive ETH amount with at most 9 decimal places"
+    );
+  }
+
+  const amountGwei =
+    BigInt(whole || "0") * BigInt(ONE_ETH_GWEI) +
+    BigInt(fraction.padEnd(9, "0") || "0");
+
+  if (amountGwei <= 0n || amountGwei > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error(
+      "--amount must be a positive ETH amount with at most 9 decimal places"
+    );
+  }
+
+  return Number(amountGwei);
+}
+
 /**
  * Main CLI function
  */
@@ -72,8 +107,8 @@ export async function main(): Promise<void> {
   debugLog("----------------\n");
 
   // Parse arguments
-  const NUM = Number(values.validators);
-  const AMOUNT = Number(values.amount) * ONE_ETH_GWEI;
+  const NUM = parseValidatorCount(values.validators);
+  const AMOUNT = parseAmountGwei(values.amount);
   const WC_TYPE = Number(values["wc-type"]) as WithdrawalCredentialsType;
   const chain = values.chain.toLowerCase();
 
