@@ -15,8 +15,7 @@
     "depositor": "dist/bin.mjs"
   },
   "files": [
-    "dist",
-    "assets"
+    "dist"
   ],
   "repository": {
     "type": "git",

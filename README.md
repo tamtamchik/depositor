@@ -17,12 +17,6 @@ Generates Ethereum validator EIP-2335 keystores and `deposit_data-*.json` files 
 
 ## Installation
 
-Use it once from npm:
-
-```bash
-npx @tamtamchik/depositor --help
-```
-
 Install it in a project:
 
 ```bash
@@ -200,7 +194,7 @@ npm audit --audit-level=moderate
 
 [![Buy Me A Coffee][ico-coffee]][link-coffee]
 
-[ico-ci]: https://github.com/tamtamchik/depositor/actions/workflows/ci.yml/badge.svg
+[ico-ci]: https://img.shields.io/github/actions/workflow/status/tamtamchik/depositor/ci.yml?style=flat-square&label=CI
 [ico-coffee]: https://img.shields.io/badge/Buy%20Me%20A-Coffee-%236F4E37.svg?style=flat-square
 [ico-version]: https://img.shields.io/npm/v/@tamtamchik/depositor.svg?style=flat-square
 [ico-license]: https://img.shields.io/npm/l/@tamtamchik/depositor.svg?style=flat-square
