@@ -180,13 +180,18 @@ export async function runBuilder(values: BuilderCliOptions): Promise<void> {
     profile.id
   );
 
-  if (!(await verifyBuilderDepositRequest(request, profile.id))) {
+  if (!(await verifyBuilderDepositRequest(request, chain, profile.id))) {
     throw new Error(
       "Builder proof of possession failed local verification; request artifacts were not written"
     );
   }
 
-  const call = await buildBuilderCallArtifact(request, requestFeeWei);
+  const call = await buildBuilderCallArtifact(
+    request,
+    chain,
+    profile.id,
+    requestFeeWei
+  );
   const timestamp = Date.now();
   const keystoreFile = join(values.out, keys.keystoreFile);
   const requestFile = join(

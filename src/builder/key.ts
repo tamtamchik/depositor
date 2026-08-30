@@ -12,7 +12,7 @@ import type { BuilderKeys, BuilderProfileId } from "./types.ts";
 /**
  * Creates 32-byte builder withdrawal credentials for one profile.
  *
- * Byte 0 contains the profile credential version.
+ * Byte 0 contains the profile credential prefix.
  * Bytes 12 through 31 contain the execution address.
  *
  * @param executionAddress This string contains a 20-byte address with a `0x` prefix.
@@ -26,7 +26,7 @@ export function buildBuilderWithdrawalCredentials(
 ): Uint8Array {
   const profile = getBuilderProfile(profileId);
   const credentials = new Uint8Array(32);
-  credentials[0] = profile.withdrawalCredentialVersion;
+  credentials[0] = profile.withdrawalCredentialPrefix;
   credentials.set(parseAddress(executionAddress), 12);
   return credentials;
 }

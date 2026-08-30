@@ -250,7 +250,20 @@ describe("builder CLI command", () => {
 
       const request = JSON.parse(await readFile(join(outputDir, requestFile), "utf8"));
       const call = JSON.parse(await readFile(join(outputDir, callFile), "utf8"));
-      assert.strictEqual(await verifyBuilderDepositRequest(request), true);
+      assert.deepStrictEqual(Object.keys(request), [
+        "pubkey",
+        "withdrawal_credentials",
+        "amount",
+        "signature",
+      ]);
+      assert.strictEqual(
+        await verifyBuilderDepositRequest(
+          request,
+          "hoodi",
+          "eip8282-review-2026-08-30"
+        ),
+        true
+      );
       assert.strictEqual(call.calldata_length, 184);
       assert.strictEqual(call.calldata.length, 2 + 184 * 2);
       assert.strictEqual(call.value_wei, "1000000000000000007");

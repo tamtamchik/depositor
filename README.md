@@ -173,12 +173,23 @@ const request = await generateBuilderDepositRequest(
   "hoodi",
   "eip8282-review-2026-08-30"
 );
-const valid = await verifyBuilderDepositRequest(request);
-const calldata = encodeBuilderDepositCalldata(request);
-const call = await buildBuilderCallArtifact(request);
+const valid = await verifyBuilderDepositRequest(
+  request,
+  "hoodi",
+  "eip8282-review-2026-08-30"
+);
+const calldata = encodeBuilderDepositCalldata(
+  request,
+  "eip8282-review-2026-08-30"
+);
+const call = await buildBuilderCallArtifact(
+  request,
+  "hoodi",
+  "eip8282-review-2026-08-30"
+);
 ```
 
-`encodeBuilderDepositCalldata` uses an 8-byte big-endian amount. `encodeBuilderDepositRequestRecord` emits the corresponding little-endian SSZ/request record.
+`BuilderDepositRequest` contains only `pubkey`, `withdrawal_credentials`, `amount`, and `signature`. `encodeBuilderDepositCalldata` uses an 8-byte big-endian amount. `encodeBuilderDepositRequestRecord` emits the corresponding little-endian SSZ/request record.
 
 ## Security Boundary
 

@@ -1,12 +1,14 @@
 import { encodeHex } from "../hex.ts";
 import { WEI_PER_GWEI } from "../units.ts";
 import { encodeBuilderDepositCalldata } from "./encoding.ts";
+import { getBuilderProfile } from "./profiles.ts";
 import { assertBuilderDepositRequest } from "./request.ts";
 import type {
   BuilderCallArtifact,
   BuilderDepositRequest,
   BuilderNetworkAvailability,
   BuilderProfile,
+  BuilderProfileId,
 } from "./types.ts";
 import {
   calculateBuilderCallValue,
@@ -28,30 +30,35 @@ function networkAvailability(
  * `value_wei` is null when `requestFeeWei` is not supplied.
  *
  * @param request This object contains a signed builder deposit request.
+ * @param chain This string selects the network and genesis fork version.
+ * @param profileId This value selects the compatibility profile.
  * @param requestFeeWei This value gives the current dynamic request fee in wei.
  * @returns The function returns the target, calldata, value, and deployment metadata.
  * @throws The function throws if the request, fee, profile, or calldata is invalid.
  */
 export async function buildBuilderCallArtifact(
   request: BuilderDepositRequest,
+  chain: string,
+  profileId: BuilderProfileId,
   requestFeeWei?: bigint
 ): Promise<BuilderCallArtifact> {
-  await assertBuilderDepositRequest(request);
+  await assertBuilderDepositRequest(request, chain, profileId);
 
-  const fields = requestFields(request);
-  const profile = fields.profile;
-  const calldata = encodeBuilderDepositCalldata(request);
+  const profile = getBuilderProfile(profileId);
+  const fields = requestFields(request, profile);
+  const calldata = encodeBuilderDepositCalldata(request, profileId);
   const amountGwei = fields.amount;
   const amountWei = amountGwei * WEI_PER_GWEI;
   const fee = requestFeeWei ?? null;
   const valueWei =
     fee === null ? null : calculateBuilderCallValue(amountWei, fee, profile);
-  const availability = networkAvailability(profile, request.network_name);
+  const networkName = chain.toLowerCase();
+  const availability = networkAvailability(profile, networkName);
 
   return {
     spec_profile: profile.id,
     profile_maturity: profile.maturity,
-    network_name: request.network_name,
+    network_name: networkName,
     network_availability: availability,
     supported_for_submission:
       availability === "active" || availability === "testnet",

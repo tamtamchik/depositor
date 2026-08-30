@@ -56,7 +56,7 @@ export const BuilderDepositRequestType = new ContainerType({
  * Creates and signs one profile-bound builder deposit request.
  *
  * The signature uses the builder deposit domain from the selected profile.
- * The function adds the profile and network metadata to the result.
+ * The result contains only the four fields of the SSZ request container.
  * The function does not write a file.
  *
  * @param pubkey This value contains the 48-byte builder BLS public key.
@@ -105,30 +105,10 @@ export async function generateBuilderDepositRequest(
   const signature = signBlsProof(signingRoot, signing);
 
   return {
-    spec_profile: profile.id,
-    profile_maturity: profile.maturity,
-    profile_reviewed_at: profile.reviewedAt,
-    profile_sources: profile.sources,
-    builder_version: profile.builderVersion,
-    withdrawal_credential_version: `0x${profile.withdrawalCredentialVersion
-      .toString(16)
-      .padStart(2, "0")}`,
-    deposit_request_type: `0x${profile.depositRequestType
-      .toString(16)
-      .padStart(2, "0")}`,
-    deposit_contract_address: profile.depositContractAddress,
     pubkey: encodeHex(pubkey),
     withdrawal_credentials: encodeHex(withdrawalCredentials),
-    execution_address: executionAddress.toLowerCase(),
     amount: amount.toString(),
-    amount_unit: "gwei",
     signature: encodeHex(signature),
-    deposit_message_root: encodeHex(messageRoot),
-    network_name: network.name,
-    fork_version: encodeHex(network.forkVersion),
-    domain_type: encodeHex(domainType),
-    key_derivation: "eip2333-master",
-    key_path: "",
   };
 }
 
@@ -141,21 +121,22 @@ function builderInvariantError(profileId: string, invariant: string): Error {
 /**
  * Asserts every invariant of a signed builder deposit request.
  *
- * The function checks profile metadata, byte lengths, the Gwei amount,
- * withdrawal credentials, network metadata, the message root, and the BLS proof.
- * The expected profile defaults to `request.spec_profile`.
+ * The function checks byte lengths, the Gwei amount, withdrawal credentials,
+ * and the BLS proof for the selected network and profile.
  *
  * @param request This object contains the signed builder deposit request.
- * @param expectedProfileId This value selects the required compatibility profile.
+ * @param chain This string selects the genesis fork version for the signing domain.
+ * @param profileId This value selects the required compatibility profile.
  * @returns The promise resolves when every request invariant is valid.
  * @throws The function throws an invariant error when any request field is invalid.
  */
 export async function assertBuilderDepositRequest(
   request: BuilderDepositRequest,
-  expectedProfileId: BuilderProfileId = request.spec_profile
+  chain: string,
+  profileId: BuilderProfileId
 ): Promise<void> {
   const fail = (invariant: string): never => {
-    throw builderInvariantError(expectedProfileId, invariant);
+    throw builderInvariantError(profileId, invariant);
   };
   const captureInvariant = <T>(
     operation: () => T,
@@ -168,54 +149,13 @@ export async function assertBuilderDepositRequest(
     }
   };
 
-  if (request.spec_profile !== expectedProfileId) {
-    fail("spec_profile does not match the selected profile");
-  }
-
   const profile = captureInvariant(
-    () => getBuilderProfile(expectedProfileId),
+    () => getBuilderProfile(profileId),
     "unknown builder profile"
   );
-  if (
-    request.profile_maturity !== profile.maturity ||
-    request.profile_reviewed_at !== profile.reviewedAt ||
-    JSON.stringify(request.profile_sources) !== JSON.stringify(profile.sources)
-  ) {
-    fail("profile metadata does not match the pinned profile");
-  }
-  if (request.builder_version !== profile.builderVersion) {
-    fail("builder_version does not match the pinned profile");
-  }
-  if (
-    request.withdrawal_credential_version !==
-    `0x${profile.withdrawalCredentialVersion.toString(16).padStart(2, "0")}`
-  ) {
-    fail("withdrawal_credential_version does not match the pinned profile");
-  }
-  if (
-    request.deposit_request_type !==
-    `0x${profile.depositRequestType.toString(16).padStart(2, "0")}`
-  ) {
-    fail("deposit_request_type does not match the pinned profile");
-  }
-  if (request.deposit_contract_address !== profile.depositContractAddress) {
-    fail("deposit contract address does not match the pinned profile");
-  }
-  if (request.domain_type !== encodeHex(builderDepositDomainType(profile))) {
-    fail("domain_type does not match DOMAIN_BUILDER_DEPOSIT");
-  }
-  if (request.amount_unit !== "gwei") {
-    fail("amount_unit must be gwei");
-  }
-  if (request.key_derivation !== "eip2333-master" || request.key_path !== "") {
-    fail("builder key derivation metadata does not match the pinned policy");
-  }
-  if (request.execution_address !== request.execution_address.toLowerCase()) {
-    fail("execution_address must use lowercase hex");
-  }
 
   const fields = captureInvariant(
-    () => requestFields(request),
+    () => requestFields(request, profile),
     "malformed request fields"
   );
   const { pubkey, withdrawalCredentials, signature, amount } = fields;
@@ -223,30 +163,19 @@ export async function assertBuilderDepositRequest(
   const expectedCredentials = captureInvariant(
     () =>
       buildBuilderWithdrawalCredentials(
-        request.execution_address,
-        expectedProfileId
+        `0x${encodeHex(withdrawalCredentials.subarray(12))}`,
+        profileId
       ),
-    "malformed execution address"
+    "malformed withdrawal credentials"
   );
   if (!Buffer.from(withdrawalCredentials).equals(expectedCredentials)) {
     fail("withdrawal credentials do not match the execution address");
   }
 
   try {
-    const network = getNetworkConfig(request.network_name);
-    if (request.network_name !== network.name) {
-      fail("network_name must use the canonical lowercase name");
-    }
-    if (request.fork_version !== encodeHex(network.forkVersion)) {
-      fail("fork_version does not match the selected network");
-    }
-
+    const network = getNetworkConfig(chain);
     const message = { pubkey, withdrawalCredentials, amount } as const;
     const messageRoot = BuilderDepositMessageType.hashTreeRoot(message);
-    if (request.deposit_message_root !== encodeHex(messageRoot)) {
-      fail("deposit_message_root does not match the request fields");
-    }
-
     const domain = computeDomain(
       builderDepositDomainType(profile),
       network.forkVersion,
@@ -275,22 +204,23 @@ export async function assertBuilderDepositRequest(
 }
 
 /**
- * Verifies all profile invariants and the BLS proof of possession.
+ * Verifies all request invariants and the BLS proof of possession.
  *
  * The function also verifies field lengths, credentials, amount, network,
- * message root, and profile metadata.
+ * and profile-specific signing inputs.
  *
  * @param request This object contains the builder deposit request to verify.
- * @param expectedProfileId This value selects the required compatibility profile.
- * The default value is `request.spec_profile`.
+ * @param chain This string selects the genesis fork version for the signing domain.
+ * @param profileId This value selects the required compatibility profile.
  * @returns The function returns true only when every invariant is valid.
  */
 export async function verifyBuilderDepositRequest(
   request: BuilderDepositRequest,
-  expectedProfileId: BuilderProfileId = request.spec_profile
+  chain: string,
+  profileId: BuilderProfileId
 ): Promise<boolean> {
   try {
-    await assertBuilderDepositRequest(request, expectedProfileId);
+    await assertBuilderDepositRequest(request, chain, profileId);
     return true;
   } catch {
     return false;

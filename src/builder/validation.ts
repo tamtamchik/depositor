@@ -1,6 +1,5 @@
 import { decodeHexExact, encodeHex } from "../hex.ts";
 import { UINT64_MAX } from "../units.ts";
-import { getBuilderProfile } from "./profiles.ts";
 import type {
   BuilderDepositRequest,
   BuilderProfile,
@@ -79,19 +78,6 @@ export function validateBuilderAmount(
 }
 
 /**
- * Resolves the compatibility profile declared by a builder request.
- *
- * @param request This object contains the profile identifier.
- * @returns The function returns the frozen compatibility profile.
- * @throws The function throws if the profile identifier is unknown.
- */
-export function profileForRequest(
-  request: BuilderDepositRequest
-): BuilderProfile {
-  return getBuilderProfile(request.spec_profile);
-}
-
-/**
  * Decodes the builder deposit domain type from a compatibility profile.
  *
  * @param profile This object contains the hexadecimal domain type.
@@ -133,23 +119,24 @@ function parseBuilderAmount(
 /**
  * Decodes the wire fields of a builder deposit request.
  *
- * The function validates the profile, field lengths, and Gwei amount.
- * The function does not verify profile metadata, roots, or the BLS signature.
+ * The function validates field lengths and the profile-specific Gwei amount.
+ * The function does not verify withdrawal credentials or the BLS signature.
  *
  * @param request This object contains the encoded builder deposit fields.
- * @returns The function returns decoded request fields and the selected profile.
- * @throws The function throws if a profile, hexadecimal field, or amount is invalid.
+ * @param profile This object defines the amount limits for the request.
+ * @returns The function returns the decoded builder deposit fields.
+ * @throws The function throws if a hexadecimal field or amount is invalid.
  */
-export function requestFields(request: BuilderDepositRequest): {
-  profile: BuilderProfile;
+export function requestFields(
+  request: BuilderDepositRequest,
+  profile: BuilderProfile
+): {
   pubkey: Uint8Array;
   withdrawalCredentials: Uint8Array;
   amount: bigint;
   signature: Uint8Array;
 } {
-  const profile = profileForRequest(request);
   return {
-    profile,
     pubkey: decodeCanonicalHex(request.pubkey, 48, "Builder public key"),
     withdrawalCredentials: decodeCanonicalHex(
       request.withdrawal_credentials,

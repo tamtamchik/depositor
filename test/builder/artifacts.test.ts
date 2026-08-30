@@ -146,383 +146,373 @@ describe("builder artifacts", () => {
       builderProfiles
     ) as BuilderProfileId[]) {
       it(`matches ${profileId}`, async () => {
-      const expected = fixture.profiles[profileId];
-      const request = await generateBuilderDepositRequest(
-        pubkey,
-        signing,
-        fixture.execution_address,
-        BigInt(fixture.amount_gwei),
-        fixture.network,
-        profileId
-      );
-
-      assert.strictEqual(request.pubkey, expected.pubkey);
-      assert.strictEqual(
-        request.withdrawal_credentials,
-        expected.withdrawal_credentials
-      );
-      assert.strictEqual(request.signature, expected.signature);
-      assert.strictEqual(
-        request.deposit_message_root,
-        expected.deposit_message_root
-      );
-      const profile = getBuilderProfile(profileId);
-      const network = getNetworkConfig(fixture.network);
-      const domain = computeDomain(
-        fromHex(profile.domainBuilderDeposit),
-        network.forkVersion,
-        ZERO_HASH
-      );
-      const signingRoot = computeSigningRoot(
-        BuilderDepositMessageType.hashTreeRoot({
+        const expected = fixture.profiles[profileId];
+        const request = await fixtureRequest(profileId);
+        const profile = getBuilderProfile(profileId);
+        const network = getNetworkConfig(fixture.network);
+        const messageRoot = BuilderDepositMessageType.hashTreeRoot({
           pubkey,
           withdrawalCredentials: fromHex(request.withdrawal_credentials),
           amount: BigInt(request.amount),
-        }),
-        domain
-      );
-      assert.strictEqual(hex(domain), expected.domain);
-      assert.strictEqual(hex(signingRoot), expected.signing_root);
-      assert.strictEqual(
-        hex(encodeBuilderDepositCalldata(request)),
-        expected.calldata
-      );
-      assert.strictEqual(
-        hex(encodeBuilderDepositRequestRecord(request)),
-        expected.request_record
-      );
-      assert.strictEqual(
-        await verifyBuilderDepositRequest(request, profileId),
-        true
-      );
+        });
+        const domain = computeDomain(
+          fromHex(profile.domainBuilderDeposit),
+          network.forkVersion,
+          ZERO_HASH
+        );
+        const signingRoot = computeSigningRoot(messageRoot, domain);
+
+        assert.deepStrictEqual(Object.keys(request), [
+          "pubkey",
+          "withdrawal_credentials",
+          "amount",
+          "signature",
+        ]);
+        assert.strictEqual(request.pubkey, expected.pubkey);
+        assert.strictEqual(
+          request.withdrawal_credentials,
+          expected.withdrawal_credentials
+        );
+        assert.strictEqual(request.signature, expected.signature);
+        assert.strictEqual(hex(messageRoot), expected.deposit_message_root);
+        assert.strictEqual(hex(domain), expected.domain);
+        assert.strictEqual(hex(signingRoot), expected.signing_root);
+        assert.strictEqual(
+          hex(encodeBuilderDepositCalldata(request, profileId)),
+          expected.calldata
+        );
+        assert.strictEqual(
+          hex(encodeBuilderDepositRequestRecord(request, profileId)),
+          expected.request_record
+        );
+        assert.strictEqual(
+          await verifyBuilderDepositRequest(
+            request,
+            fixture.network,
+            profileId
+          ),
+          true
+        );
       });
     }
   });
 
   describe("protocol encoding", () => {
-    it("encodes calldata as 184 bytes with a big-endian amount", async () => {
-    const request = await fixtureRequest("eip8282-review-2026-08-30");
-    const calldata = encodeBuilderDepositCalldata(request);
-    assert.strictEqual(calldata.length, 184);
-    assert.strictEqual(hex(calldata.slice(0, 48)), request.pubkey);
-    assert.strictEqual(
-      hex(calldata.slice(48, 80)),
-      request.withdrawal_credentials
-    );
-    assert.strictEqual(hex(calldata.slice(80, 88)), "000000003b9aca00");
-    assert.strictEqual(hex(calldata.slice(88)), request.signature);
+    const profileId = "eip8282-review-2026-08-30";
+
+    it("encodes contract calldata as 184 bytes with a big-endian amount", async () => {
+      const request = await fixtureRequest(profileId);
+      const calldata = encodeBuilderDepositCalldata(request, profileId);
+
+      assert.strictEqual(calldata.length, 184);
+      assert.strictEqual(hex(calldata.slice(0, 48)), request.pubkey);
+      assert.strictEqual(
+        hex(calldata.slice(48, 80)),
+        request.withdrawal_credentials
+      );
+      assert.strictEqual(hex(calldata.slice(80, 88)), "000000003b9aca00");
+      assert.strictEqual(hex(calldata.slice(88)), request.signature);
     });
 
-    it("encodes request records with a little-endian amount", async () => {
-    const request = await fixtureRequest("eip8282-review-2026-08-30");
-    const record = encodeBuilderDepositRequestRecord(request);
-    assert.strictEqual(hex(record.slice(80, 88)), "00ca9a3b00000000");
+    it("encodes the SSZ request record with a little-endian amount", async () => {
+      const request = await fixtureRequest(profileId);
+      const record = encodeBuilderDepositRequestRecord(request, profileId);
+      const serialized = BuilderDepositRequestType.serialize({
+        pubkey: fromHex(request.pubkey),
+        withdrawalCredentials: fromHex(request.withdrawal_credentials),
+        amount: BigInt(request.amount),
+        signature: fromHex(request.signature),
+      });
 
-    const serialized = BuilderDepositRequestType.serialize({
-      pubkey: fromHex(request.pubkey),
-      withdrawalCredentials: fromHex(request.withdrawal_credentials),
-      amount: BigInt(request.amount),
-      signature: fromHex(request.signature),
-    });
-    assert.deepStrictEqual(record, serialized);
+      assert.strictEqual(record.length, 184);
+      assert.strictEqual(hex(record.slice(80, 88)), "00ca9a3b00000000");
+      assert.deepStrictEqual(record, serialized);
     });
   });
 
   describe("call artifact", () => {
+    const profileId = "eip8282-review-2026-08-30";
+
     it("keeps dynamic request fees unresolved unless supplied", async () => {
-    const request = await fixtureRequest("eip8282-review-2026-08-30");
-    const unresolved = await buildBuilderCallArtifact(request);
-    assert.strictEqual(unresolved.to.toLowerCase(),
-      "0x0000bff46984e3725691fa540a8c7589300d8282");
-    assert.strictEqual(unresolved.request_fee_wei, null);
-    assert.strictEqual(unresolved.value_wei, null);
-    assert.strictEqual(unresolved.supported_for_submission, false);
+      const request = await fixtureRequest(profileId);
+      const unresolved = await buildBuilderCallArtifact(
+        request,
+        fixture.network,
+        profileId
+      );
+      const withFee = await buildBuilderCallArtifact(
+        request,
+        fixture.network,
+        profileId,
+        7n
+      );
 
-    const withFee = await buildBuilderCallArtifact(request, 7n);
-    assert.strictEqual(withFee.request_fee_wei, "7");
-    assert.strictEqual(withFee.value_wei, "1000000000000000007");
+      assert.strictEqual(
+        unresolved.to.toLowerCase(),
+        "0x0000bff46984e3725691fa540a8c7589300d8282"
+      );
+      assert.strictEqual(unresolved.request_fee_wei, null);
+      assert.strictEqual(unresolved.value_wei, null);
+      assert.strictEqual(unresolved.supported_for_submission, false);
+      assert.strictEqual(withFee.request_fee_wei, "7");
+      assert.strictEqual(withFee.value_wei, "1000000000000000007");
+    });
 
-    await assert.rejects(
-      buildBuilderCallArtifact(request, 0n),
-      /Request fee must be at least 1 wei/
-    );
-    await assert.rejects(
-      buildBuilderCallArtifact(request, 1n << 256n),
-      /Request fee must fit an unsigned 256-bit wei value/
-    );
-    await assert.rejects(
-      buildBuilderCallArtifact(request, (1n << 256n) - 1n),
-      /Builder call value must fit an unsigned 256-bit wei value/
-    );
+    it("rejects invalid fee and value ranges", async () => {
+      const request = await fixtureRequest(profileId);
+      await assert.rejects(
+        buildBuilderCallArtifact(request, fixture.network, profileId, 0n),
+        /Request fee must be at least 1 wei/
+      );
+      await assert.rejects(
+        buildBuilderCallArtifact(
+          request,
+          fixture.network,
+          profileId,
+          1n << 256n
+        ),
+        /Request fee must fit an unsigned 256-bit wei value/
+      );
+      await assert.rejects(
+        buildBuilderCallArtifact(
+          request,
+          fixture.network,
+          profileId,
+          (1n << 256n) - 1n
+        ),
+        /Builder call value must fit an unsigned 256-bit wei value/
+      );
     });
   });
 
   describe("local validation", () => {
-    it("rejects noncanonical builder artifact text", async () => {
-    const request = await fixtureRequest("eip8282-review-2026-08-30");
-    const variants: BuilderDepositRequest[] = [
-      { ...request, amount: "0x3b9aca00" },
-      { ...request, amount: "+1000000000" },
-      { ...request, amount: "01000000000" },
-      { ...request, pubkey: `0x${request.pubkey}` },
-      { ...request, pubkey: request.pubkey.toUpperCase() },
-      { ...request, network_name: "HOODI" },
-      {
-        ...request,
-        deposit_contract_address: request.deposit_contract_address.toLowerCase(),
-      },
-    ];
+    const profileId = "eip8282-review-2026-08-30";
 
-    for (const variant of variants) {
-      assert.strictEqual(await verifyBuilderDepositRequest(variant), false);
-    }
+    it("rejects noncanonical request text", async () => {
+      const request = await fixtureRequest(profileId);
+      const variants: BuilderDepositRequest[] = [
+        { ...request, amount: "0x3b9aca00" },
+        { ...request, amount: "+1000000000" },
+        { ...request, amount: "01000000000" },
+        { ...request, pubkey: `0x${request.pubkey}` },
+        { ...request, pubkey: request.pubkey.toUpperCase() },
+      ];
 
-    const mixedCaseAddress =
-      "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd";
-    const mixedCaseRequest = await generateBuilderDepositRequest(
-      pubkey,
-      signing,
-      mixedCaseAddress,
-      BigInt(fixture.amount_gwei),
-      fixture.network,
-      "eip8282-review-2026-08-30"
-    );
-    assert.strictEqual(
-      await verifyBuilderDepositRequest({
-        ...mixedCaseRequest,
-        execution_address: `0x${mixedCaseAddress.slice(2).toUpperCase()}`,
-      }),
-      false
-    );
+      for (const variant of variants) {
+        assert.strictEqual(
+          await verifyBuilderDepositRequest(
+            variant,
+            fixture.network,
+            profileId
+          ),
+          false
+        );
+      }
     });
 
-  it("rejects every mismatched builder request invariant", async () => {
-    const request = await fixtureRequest("eip8282-review-2026-08-30");
-    const variants: BuilderDepositRequest[] = [
-      { ...request, builder_version: request.builder_version + 1 },
-      { ...request, withdrawal_credential_version: "0x01" },
-      { ...request, deposit_request_type: "0x04" },
-      { ...request, amount_unit: "wei" } as unknown as BuilderDepositRequest,
-      {
+    it("rejects the wrong network, profile, credentials, and signature", async () => {
+      const request = await fixtureRequest(profileId);
+      const badSignature = {
         ...request,
-        key_derivation: "eip2334",
-      } as unknown as BuilderDepositRequest,
-      {
+        signature: `00${request.signature.slice(2)}`,
+      };
+      const badCredentials = {
         ...request,
         withdrawal_credentials: `ff${request.withdrawal_credentials.slice(2)}`,
-      },
-      { ...request, fork_version: "00000000" },
-      { ...request, deposit_message_root: "00".repeat(32) },
-    ];
+      };
 
-    for (const variant of variants) {
-      assert.strictEqual(await verifyBuilderDepositRequest(variant), false);
-    }
-  });
+      assert.strictEqual(
+        await verifyBuilderDepositRequest(request, "sepolia", profileId),
+        false
+      );
+      assert.strictEqual(
+        await verifyBuilderDepositRequest(
+          request,
+          fixture.network,
+          "gloas-v1.7.0-alpha.11"
+        ),
+        false
+      );
+      assert.strictEqual(
+        await verifyBuilderDepositRequest(
+          badCredentials,
+          fixture.network,
+          profileId
+        ),
+        false
+      );
+      assert.strictEqual(
+        await verifyBuilderDepositRequest(
+          badSignature,
+          fixture.network,
+          profileId
+        ),
+        false
+      );
+      await assert.rejects(
+        buildBuilderCallArtifact(
+          badSignature,
+          fixture.network,
+          profileId
+        ),
+        /BLS proof of possession is invalid/
+      );
+    });
 
-  it("rejects a builder public key that does not match the secret key", async () => {
-    const differentSigning = signing.slice();
-    differentSigning[differentSigning.length - 1] ^= 1;
-    await assert.rejects(
-      generateBuilderDepositRequest(
-        pubkey,
-        differentSigning,
-        fixture.execution_address,
-        BigInt(fixture.amount_gwei),
-        fixture.network,
-        "eip8282-review-2026-08-30"
-      ),
-      /public key does not match the secret key/
-    );
-  });
+    it("rejects invalid generation inputs", async () => {
+      const differentSigning = signing.slice();
+      differentSigning[differentSigning.length - 1] ^= 1;
 
-  it("rejects malformed or unsafe builder requests locally", async () => {
-    const request = await fixtureRequest("eip8282-review-2026-08-30");
-    const badSignature = {
-      ...request,
-      signature: `00${request.signature.slice(2)}`,
-    };
-    assert.strictEqual(
-      await verifyBuilderDepositRequest(badSignature),
-      false
-    );
-    assert.strictEqual(
-      await verifyBuilderDepositRequest(
-        request,
-        "gloas-v1.7.0-alpha.11"
-      ),
-      false
-    );
-    assert.strictEqual(
-      await verifyBuilderDepositRequest({
-        ...request,
-        pubkey: request.pubkey.slice(2),
-      }),
-      false
-    );
-    assert.strictEqual(
-      await verifyBuilderDepositRequest({
-        ...request,
-        profile_sources: [],
-      }),
-      false
-    );
-    assert.strictEqual(
-      await verifyBuilderDepositRequest({
-        ...request,
-        domain_type: "03000000",
-      }),
-      false
-    );
-    await assert.rejects(
-      buildBuilderCallArtifact(badSignature),
-      /profile eip8282-review-2026-08-30: BLS proof of possession is invalid/
-    );
-    await assert.rejects(
-      buildBuilderCallArtifact({
-        ...request,
-        domain_type: "03000000",
-      }),
-      /profile eip8282-review-2026-08-30: domain_type/
-    );
-    await assert.rejects(
-      buildBuilderCallArtifact({
-        ...request,
-        pubkey: request.pubkey.slice(2),
-      }),
-      /profile eip8282-review-2026-08-30: Builder public key must be exactly 48 bytes/
-    );
-    await assert.rejects(
-      generateBuilderDepositRequest(
-        pubkey,
-        signing,
-        "0xnot-an-address",
-        1_000_000_000n,
-        fixture.network,
-        "eip8282-review-2026-08-30"
-      ),
-      /Address must be/
-    );
-    await assert.rejects(
-      generateBuilderDepositRequest(
-        pubkey,
-        signing,
-        fixture.execution_address,
-        999_999_999n,
-        fixture.network,
-        "eip8282-review-2026-08-30"
-      ),
-      /at least 1000000000 Gwei/
-    );
-    await assert.rejects(
-      generateBuilderDepositRequest(
-        pubkey,
-        signing,
-        fixture.execution_address,
-        1n << 64n,
-        fixture.network,
-        "eip8282-review-2026-08-30"
-      ),
-      /unsigned 64-bit/
-    );
-    await assert.rejects(
-      generateBuilderDepositRequest(
-        pubkey,
-        signing.slice(1),
-        fixture.execution_address,
-        1_000_000_000n,
-        fixture.network,
-        "eip8282-review-2026-08-30"
-      ),
-      /Builder secret key must be exactly 32 bytes/
-    );
-    await assert.rejects(
-      generateBuilderDepositRequest(
-        pubkey.slice(1),
-        signing,
-        fixture.execution_address,
-        1_000_000_000n,
-        fixture.network,
-        "eip8282-review-2026-08-30"
-      ),
-      /Builder public key must be exactly 48 bytes/
-    );
-  });
-
+      await assert.rejects(
+        generateBuilderDepositRequest(
+          pubkey,
+          differentSigning,
+          fixture.execution_address,
+          BigInt(fixture.amount_gwei),
+          fixture.network,
+          profileId
+        ),
+        /public key does not match the secret key/
+      );
+      await assert.rejects(
+        generateBuilderDepositRequest(
+          pubkey,
+          signing,
+          "0xnot-an-address",
+          1_000_000_000n,
+          fixture.network,
+          profileId
+        ),
+        /Address must be/
+      );
+      await assert.rejects(
+        generateBuilderDepositRequest(
+          pubkey,
+          signing,
+          fixture.execution_address,
+          999_999_999n,
+          fixture.network,
+          profileId
+        ),
+        /at least 1000000000 Gwei/
+      );
+      await assert.rejects(
+        generateBuilderDepositRequest(
+          pubkey,
+          signing,
+          fixture.execution_address,
+          1n << 64n,
+          fixture.network,
+          profileId
+        ),
+        /unsigned 64-bit/
+      );
+      await assert.rejects(
+        generateBuilderDepositRequest(
+          pubkey,
+          signing.slice(1),
+          fixture.execution_address,
+          1_000_000_000n,
+          fixture.network,
+          profileId
+        ),
+        /Builder secret key must be exactly 32 bytes/
+      );
+      await assert.rejects(
+        generateBuilderDepositRequest(
+          pubkey.slice(1),
+          signing,
+          fixture.execution_address,
+          1_000_000_000n,
+          fixture.network,
+          profileId
+        ),
+        /Builder public key must be exactly 48 bytes/
+      );
+    });
   });
 
   describe("domain separation", () => {
     it("rejects validator proofs in builder deposits and builder proofs in validator deposits", async () => {
-    const profileId = "eip8282-review-2026-08-30";
-    const builderRequest = await fixtureRequest(profileId);
-    const withdrawalCredentials = fromHex(
-      builderRequest.withdrawal_credentials
-    );
-    const amount = Number(builderRequest.amount);
+      const profileId = "eip8282-review-2026-08-30";
+      const builderRequest = await fixtureRequest(profileId);
+      const withdrawalCredentials = fromHex(
+        builderRequest.withdrawal_credentials
+      );
+      const amount = Number(builderRequest.amount);
+      const messageRoot = BuilderDepositMessageType.hashTreeRoot({
+        pubkey,
+        withdrawalCredentials,
+        amount: BigInt(builderRequest.amount),
+      });
 
-    const validatorSigned = await generateValidatorDepositData(
-      pubkey,
-      signing,
-      withdrawalCredentials,
-      amount,
-      fixture.network
-    );
-    const validatorAsBuilder: BuilderDepositRequest = {
-      ...builderRequest,
-      signature: validatorSigned.signature,
-      deposit_message_root: validatorSigned.deposit_message_root,
-    };
-    assert.strictEqual(
-      await verifyBuilderDepositRequest(validatorAsBuilder),
-      false
-    );
+      const validatorSigned = await generateValidatorDepositData(
+        pubkey,
+        signing,
+        withdrawalCredentials,
+        amount,
+        fixture.network
+      );
+      const validatorAsBuilder: BuilderDepositRequest = {
+        ...builderRequest,
+        signature: validatorSigned.signature,
+      };
+      assert.strictEqual(
+        await verifyBuilderDepositRequest(
+          validatorAsBuilder,
+          fixture.network,
+          profileId
+        ),
+        false
+      );
 
-    const builderSignature = fromHex(builderRequest.signature);
-    const builderAsValidator: ValidatorDepositData = {
-      pubkey: builderRequest.pubkey,
-      withdrawal_credentials: builderRequest.withdrawal_credentials,
-      amount,
-      signature: builderRequest.signature,
-      deposit_message_root: builderRequest.deposit_message_root,
-      deposit_data_root: hex(
-        DepositDataType.hashTreeRoot({
-          pubkey,
-          withdrawalCredentials,
-          amount,
-          signature: builderSignature,
-        })
-      ),
-      network_name: fixture.network,
-      deposit_cli_version: "2.0.0-test",
-      fork_version: builderRequest.fork_version,
-    };
-    const network = getNetworkConfig(fixture.network);
-    const validatorDomain = computeDomain(
-      DOMAIN_DEPOSIT,
-      network.forkVersion,
-      ZERO_HASH
-    );
-    const builderDomain = computeDomain(
-      DOMAIN_BUILDER_DEPOSIT,
-      network.forkVersion,
-      ZERO_HASH
-    );
-    assert.notDeepStrictEqual(validatorDomain, builderDomain);
-    assert.strictEqual(
-      await verifyValidatorDepositData(builderAsValidator, validatorDomain),
-      false
-    );
+      const builderSignature = fromHex(builderRequest.signature);
+      const network = getNetworkConfig(fixture.network);
+      const builderAsValidator: ValidatorDepositData = {
+        pubkey: builderRequest.pubkey,
+        withdrawal_credentials: builderRequest.withdrawal_credentials,
+        amount,
+        signature: builderRequest.signature,
+        deposit_message_root: hex(messageRoot),
+        deposit_data_root: hex(
+          DepositDataType.hashTreeRoot({
+            pubkey,
+            withdrawalCredentials,
+            amount,
+            signature: builderSignature,
+          })
+        ),
+        network_name: fixture.network,
+        deposit_cli_version: "2.0.0-test",
+        fork_version: hex(network.forkVersion),
+      };
+      const validatorDomain = computeDomain(
+        DOMAIN_DEPOSIT,
+        network.forkVersion,
+        ZERO_HASH
+      );
+      const builderDomain = computeDomain(
+        DOMAIN_BUILDER_DEPOSIT,
+        network.forkVersion,
+        ZERO_HASH
+      );
+
+      assert.notDeepStrictEqual(validatorDomain, builderDomain);
+      assert.strictEqual(
+        await verifyValidatorDepositData(builderAsValidator, validatorDomain),
+        false
+      );
     });
   });
 
   describe("withdrawal credentials", () => {
-    it("uses each profile-specific credential prefix", () => {
+    it("uses the credential prefix required by each pinned profile", () => {
       assert.strictEqual(
         buildBuilderWithdrawalCredentials(
           fixture.execution_address,
           "gloas-v1.7.0-alpha.11"
         )[0],
-        0x03
+        0x00
       );
       assert.strictEqual(
         buildBuilderWithdrawalCredentials(

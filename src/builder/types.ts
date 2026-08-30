@@ -49,7 +49,7 @@ export interface BuilderProfile {
   /** Gives the builder registry version as an unsigned integer. */
   readonly builderVersion: number;
   /** Gives the first byte of builder withdrawal credentials. */
-  readonly withdrawalCredentialVersion: number;
+  readonly withdrawalCredentialPrefix: number;
   /** Gives the 4-byte builder deposit domain type with a `0x` prefix. */
   readonly domainBuilderDeposit: string;
   /** Gives the 4-byte beacon builder domain type with a `0x` prefix. */
@@ -85,52 +85,20 @@ export interface BuilderKeys {
 }
 
 /**
- * Contains a signed builder deposit request and its compatibility metadata.
+ * Contains one signed SSZ `BuilderDepositRequest`.
  *
- * Hexadecimal fields do not have a `0x` prefix unless their field comment
- * specifies the prefix.
+ * This interface is the JSON projection of the four consensus fields.
+ * Hexadecimal fields use lowercase text without a `0x` prefix.
  */
 export interface BuilderDepositRequest {
-  /** Gives the profile that defines every request value. */
-  spec_profile: BuilderProfileId;
-  /** Gives the maturity of the selected profile. */
-  profile_maturity: BuilderProfileMaturity;
-  /** Gives the selected profile review date in `YYYY-MM-DD` format. */
-  profile_reviewed_at: string;
-  /** Lists the immutable sources of the selected profile. */
-  profile_sources: readonly BuilderProfileSource[];
-  /** Gives the builder registry version. */
-  builder_version: number;
-  /** Gives the credential version as one byte with a `0x` prefix. */
-  withdrawal_credential_version: string;
-  /** Gives the request type as one byte with a `0x` prefix. */
-  deposit_request_type: string;
-  /** Gives the expected builder deposit contract address. */
-  deposit_contract_address: string;
   /** Contains the 48-byte builder BLS public key as 96 hex characters. */
   pubkey: string;
   /** Contains the 32-byte builder withdrawal credentials as 64 hex characters. */
   withdrawal_credentials: string;
-  /** Gives the lowercase execution withdrawal address with a `0x` prefix. */
-  execution_address: string;
   /** Gives the deposit amount in Gwei as a decimal string. */
   amount: string;
-  /** Identifies Gwei as the unit of `amount`. */
-  amount_unit: "gwei";
   /** Contains the 96-byte BLS proof of possession as 192 hex characters. */
   signature: string;
-  /** Contains the 32-byte SSZ message root as 64 hex characters. */
-  deposit_message_root: string;
-  /** Gives the canonical lowercase signing network name. */
-  network_name: string;
-  /** Contains the 4-byte network fork version as 8 hex characters. */
-  fork_version: string;
-  /** Contains the 4-byte builder deposit domain type as 8 hex characters. */
-  domain_type: string;
-  /** Identifies direct EIP-2333 master-key derivation. */
-  key_derivation: "eip2333-master";
-  /** Confirms that the current builder key policy uses no derivation path. */
-  key_path: "";
 }
 
 /**

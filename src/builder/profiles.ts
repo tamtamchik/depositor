@@ -9,12 +9,12 @@ const unavailableNetworks = Object.freeze({
 
 type SharedBuilderProfile = Omit<
   BuilderProfile,
-  "id" | "sources" | "withdrawalCredentialVersion"
+  "id" | "sources" | "withdrawalCredentialPrefix"
 >;
 
 type BuilderProfileDefinition = Pick<
   BuilderProfile,
-  "id" | "sources" | "withdrawalCredentialVersion"
+  "id" | "sources" | "withdrawalCredentialPrefix"
 >;
 
 const sharedBuilderProfile: Readonly<SharedBuilderProfile> = Object.freeze({
@@ -56,7 +56,7 @@ export const builderProfiles: Readonly<
         revision: "7d5f3348d7b947851861745be9ce0ba30e526531",
       },
     ],
-    withdrawalCredentialVersion: 0x03,
+    withdrawalCredentialPrefix: 0x00,
   }),
   "eip8282-review-2026-08-30": defineBuilderProfile({
     id: "eip8282-review-2026-08-30",
@@ -72,7 +72,7 @@ export const builderProfiles: Readonly<
         revision: "3434cc69d695604ea52253e31486f46ba0e36901",
       },
     ],
-    withdrawalCredentialVersion: 0xb0,
+    withdrawalCredentialPrefix: 0xb0,
   }),
 });
 
