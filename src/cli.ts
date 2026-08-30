@@ -1,216 +1,102 @@
 #!/usr/bin/env -S node --experimental-strip-types
 
-/**
- * Command Line Interface for Ethereum 2.0 deposit tool
- */
+import { Command, CommanderError } from "commander";
 
-import { realpathSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
-import { parseArgs } from "node:util";
+import packageMetadata from "../package.json" with { type: "json" };
+import { listBuilderProfiles } from "./builder/profiles.ts";
+import { createBuilderCommand } from "./cli/builder.ts";
+import { createValidatorCommand } from "./cli/validator.ts";
 
-import * as bip39 from "@scure/bip39";
-import { wordlist as english } from "@scure/bip39/wordlists/english.js";
-import {
-  buildWithdrawalCredentials,
-  computeDomain,
-  DOMAIN_DEPOSIT,
-  debugLog,
-  generateDepositData,
-  generateValidatorKeys,
-  getNetworkConfig,
-  getValidatorInfo,
-  ONE_ETH_GWEI,
-  verifyDepositData,
-  ZERO_HASH,
-} from "./core.ts";
-import type { CliOptions, WithdrawalCredentialsType } from "./types.ts";
+const packageVersion = packageMetadata.version;
 
-function parseValidatorCount(value: string): number {
-  if (!/^\d+$/.test(value)) {
-    throw new Error("--validators must be a positive integer");
-  }
-
-  const validators = Number(value);
-  if (!Number.isSafeInteger(validators) || validators < 1) {
-    throw new Error("--validators must be a positive integer");
-  }
-  return validators;
+function builderProfilesHelp(): string {
+  const profiles = listBuilderProfiles()
+    .map((profile) => `  ${profile.id} (${profile.maturity})`)
+    .join("\n");
+  return `\nBuilder profiles:\n${profiles}`;
 }
 
-function parseAmountGwei(value: string): number {
-  if (!/^(?:\d+|\d+\.\d+|\.\d+)$/.test(value)) {
-    throw new Error(
-      "--amount must be at least 1 ETH with at most 9 decimal places"
-    );
+function configureCommandTree(command: Command): void {
+  command.exitOverride().configureOutput({ writeErr: () => {} });
+  for (const subcommand of command.commands) {
+    configureCommandTree(subcommand);
   }
-
-  const [whole = "0", fraction = ""] = value.split(".");
-  if (fraction.length > 9) {
-    throw new Error(
-      "--amount must be at least 1 ETH with at most 9 decimal places"
-    );
-  }
-
-  const amountGwei =
-    BigInt(whole || "0") * BigInt(ONE_ETH_GWEI) +
-    BigInt(fraction.padEnd(9, "0") || "0");
-
-  if (amountGwei < BigInt(ONE_ETH_GWEI)) {
-    throw new Error(
-      "--amount must be at least 1 ETH with at most 9 decimal places"
-    );
-  }
-
-  if (amountGwei > BigInt(Number.MAX_SAFE_INTEGER)) {
-    throw new Error("--amount must not exceed 9007199.254740991 ETH");
-  }
-
-  return Number(amountGwei);
 }
 
 /**
- * Main CLI function
+ * Builds the root `depositor` command tree.
+ *
+ * The command includes validator, builder, and help routes.
+ * The function does not parse process arguments or generate artifacts.
+ *
+ * @returns The function returns a configured Commander command.
  */
-export async function main(): Promise<void> {
-  const { values } = parseArgs({
-    options: {
-      mnemonic: { type: "string" },
-      validators: { type: "string", default: "1" },
-      "wc-type": { type: "string", default: "1" },
-      "wc-address": { type: "string" },
-      chain: { type: "string", default: "hoodi" },
-      password: { type: "string" },
-      out: { type: "string", default: "./validator_keys" },
-      verify: { type: "boolean", default: true },
-      amount: { type: "string", default: "32" },
-      debug: { type: "boolean", default: false },
-      "allow-mainnet": { type: "boolean", default: false },
-    },
-    allowPositionals: true,
-  }) as { values: CliOptions };
+export function createCli(): Command {
+  const program = new Command()
+    .name("depositor")
+    .description(
+      "Offline Ethereum validator and experimental ePBS builder artifact generator"
+    )
+    .version(packageVersion)
+    .showHelpAfterError()
+    .enablePositionalOptions()
+    .allowExcessArguments();
 
-  // Enable debug mode if requested
-  if (values.debug) {
-    process.env.DEBUG = "true";
-  }
+  program
+    .addCommand(createValidatorCommand(packageVersion))
+    .addCommand(createBuilderCommand())
+    .helpCommand(true)
+    .addHelpText("after", builderProfilesHelp())
+    .action(() => {
+      const [unknownCommand] = program.args;
+      if (unknownCommand) {
+        throw new Error(`Unknown command: ${unknownCommand}`);
+      }
+      program.help();
+    });
 
-  // Debug logging for all values
-  debugLog("\n🔍 Debug Values:");
-  debugLog("----------------");
-  debugLog(`Mnemonic: ${values.mnemonic ? "provided" : "will be generated"}`);
-  debugLog(`Number of validators: ${values.validators}`);
-  debugLog(`Withdrawal credentials type: ${values["wc-type"]}`);
-  debugLog(`Withdrawal address: ${values["wc-address"] || "not provided"}`);
-  debugLog(`Chain: ${values.chain}`);
-  debugLog(`Allow mainnet: ${values["allow-mainnet"]}`);
-  debugLog(`Output directory: ${values.out}`);
-  debugLog(`Verify: ${values.verify}`);
-  debugLog(
-    `Amount: ${values.amount} ETH (${
-      Number(values.amount) * ONE_ETH_GWEI
-    } Gwei)`
-  );
-  debugLog("----------------\n");
+  configureCommandTree(program);
 
-  // Parse arguments
-  const NUM = parseValidatorCount(values.validators);
-  const AMOUNT = parseAmountGwei(values.amount);
-  const WC_TYPE = Number(values["wc-type"]) as WithdrawalCredentialsType;
-  const chain = values.chain.toLowerCase();
+  return program;
+}
 
-  if (chain === "mainnet" && !values["allow-mainnet"]) {
-    throw new Error(
-      "--chain=mainnet requires --allow-mainnet because this CLI prints validator secrets"
-    );
-  }
+function normalizeCommanderError(error: CommanderError): Error {
+  const message = error.message
+    .replace(/^error:\s*/i, "")
+    .replace(/(unknown option '--[^'=]+)=[^']+(')/i, "$1$2");
+  return new Error(`${message.charAt(0).toUpperCase()}${message.slice(1)}`);
+}
 
-  // Validate withdrawal credential type
-  if (![0, 1, 2].includes(WC_TYPE))
-    throw new Error("--wc-type must be 0, 1, or 2");
-
-  // Validate password is provided
-  if (!values.password)
-    throw new Error("--password is required for keystore generation");
-
-  // Create output directory
-  await mkdir(values.out, { recursive: true });
-
-  // Generate or use provided mnemonic
-  const mnemonic = values.mnemonic ?? bip39.generateMnemonic(english, 256);
-  console.log(`\n📝  Mnemonic: ${mnemonic}\n`);
-
-  // Get network configuration
-  const networkConfig = getNetworkConfig(chain);
-  const domain = computeDomain(
-    DOMAIN_DEPOSIT,
-    networkConfig.forkVersion,
-    ZERO_HASH
-  );
-
-  // Generate validator keys and deposit data
-  const depositDataArray = [];
-
-  for (let i = 0; i < NUM; i++) {
-    // Generate validator keys
-    const { signing, pubkey } = await generateValidatorKeys(
-      mnemonic,
-      i,
-      values.password,
-      values.out
-    );
-
-    // Log validator information
-    getValidatorInfo(signing, pubkey, i);
-
-    // Build withdrawal credentials
-    const withdrawalCredentials = buildWithdrawalCredentials(
-      WC_TYPE,
-      pubkey,
-      values["wc-address"]
-    );
-
-    // Generate deposit data
-    const depositData = await generateDepositData(
-      pubkey,
-      signing,
-      withdrawalCredentials,
-      AMOUNT,
-      chain
-    );
-
-    depositDataArray.push(depositData);
-  }
-
-  // Write deposit data to file
-  const file = join(values.out, `deposit_data-${Date.now()}.json`);
-  await writeFile(file, JSON.stringify(depositDataArray, null, 2));
-  console.log(`✅  ${NUM} validator(s) written to ${file}`);
-
-  // Verify deposit data if requested
-  if (values.verify) {
-    console.log("\n🔍 Verifying deposit_data…");
-    const buf = await readFile(file, "utf8");
-    const items = JSON.parse(buf);
-    for (const [idx, depositData] of items.entries()) {
-      const isValid = await verifyDepositData(depositData, domain);
-      if (!isValid) throw new Error(`Validator #${idx}: verification failed`);
-      console.log(`✅ Validator #${idx} verified`);
+/**
+ * Parses CLI arguments and runs the selected offline artifact workflow.
+ *
+ * The default input excludes the Node.js executable and script path.
+ * Validator and builder commands can write keys, recovery material, and JSON artifacts.
+ * Help and version commands return without generating artifacts.
+ *
+ * @param args This list contains CLI arguments. The default is `process.argv.slice(2)`.
+ * @returns The promise resolves after the selected command completes.
+ * @throws The function throws if arguments, safety policy, or artifact generation fail.
+ */
+export async function main(
+  args: readonly string[] = process.argv.slice(2)
+): Promise<void> {
+  try {
+    await createCli().parseAsync([...args], { from: "user" });
+  } catch (error) {
+    if (
+      error instanceof CommanderError &&
+      [
+        "commander.help",
+        "commander.helpDisplayed",
+        "commander.version",
+      ].includes(error.code)
+    ) {
+      return;
     }
-    console.log("✅ All signatures and roots verified correctly\n");
+    if (error instanceof CommanderError) {
+      throw normalizeCommanderError(error);
+    }
+    throw error;
   }
-
-  console.log(`🔑  Keystores are in ${values.out}\n`);
-}
-
-// Run the CLI if this is the main module (realpath survives the npm bin symlink)
-if (
-  process.argv[1] &&
-  import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href
-) {
-  main().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
 }

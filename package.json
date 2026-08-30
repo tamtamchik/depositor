@@ -1,7 +1,7 @@
 {
   "name": "@tamtamchik/depositor",
-  "version": "1.0.1",
-  "description": "CLI tool for generating Ethereum validator deposit_data and keystore files on testnets",
+  "version": "2.0.0",
+  "description": "Offline Ethereum validator and experimental ePBS builder key/deposit artifact generator",
   "type": "module",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
@@ -26,11 +26,11 @@
     "url": "https://github.com/tamtamchik/depositor/issues"
   },
   "scripts": {
-    "start": "node --experimental-strip-types src/index.ts",
-    "generate": "node --experimental-strip-types src/index.ts",
+    "start": "node --experimental-strip-types src/bin.ts",
+    "generate": "node --experimental-strip-types src/bin.ts",
     "build": "tsdown src/index.ts src/bin.ts --format esm --dts --platform node --out-dir dist",
-    "test": "node --experimental-strip-types --test test/**/*.ts",
-    "test:coverage": "node --experimental-strip-types --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info test/**/*.ts",
+    "test": "node --experimental-strip-types --test test/**/*.test.ts",
+    "test:coverage": "node --experimental-strip-types --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=lcov.info test/**/*.test.ts",
     "lint": "biome check . && tsc --noEmit",
     "prepublishOnly": "npm run lint && npm test && npm run build"
   },
@@ -40,7 +40,11 @@
     "deposit",
     "keystore",
     "bls",
-    "validator"
+    "validator",
+    "staking",
+    "epbs",
+    "builder",
+    "glamsterdam"
   ],
   "author": "Yuri Tkachenko <yuri.tam.tkachenko@gmail.com>",
   "license": "MIT",
@@ -62,7 +66,8 @@
     "@chainsafe/bls-keystore": "^3.1.0",
     "@chainsafe/ssz": "^1.6.0",
     "@noble/curves": "^2.2.0",
-    "@scure/bip39": "^2.2.0"
+    "@scure/bip39": "^2.2.0",
+    "commander": "^15.0.0"
   },
   "publishConfig": {
     "access": "public"
