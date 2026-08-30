@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { existsSync } from "node:fs";
 import { mkdir, rm } from "node:fs/promises";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
 // Import functions to test
 import {
@@ -70,6 +71,19 @@ describe("Validator and Deposit Generation", () => {
         result.keystoreFile.startsWith("keystore-m_12381_3600_0_0_0-"),
         "keystore filename should match expected format"
       );
+    });
+
+    it("should create the output directory", async () => {
+      await rm(TEST_DIR, { recursive: true, force: true });
+
+      const result = await generateValidatorKeys(
+        TEST_MNEMONIC,
+        0,
+        TEST_PASSWORD,
+        TEST_DIR
+      );
+
+      assert(existsSync(join(TEST_DIR, result.keystoreFile)));
     });
 
     it("should generate different keys for different indices", async () => {

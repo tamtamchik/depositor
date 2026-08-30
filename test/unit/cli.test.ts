@@ -91,4 +91,108 @@ describe("CLI", () => {
       );
     });
   });
+
+  it("rejects invalid validator counts", async () => {
+    await withArgv(
+      [
+        `--mnemonic=${TEST_MNEMONIC}`,
+        `--password=${TEST_PASSWORD}`,
+        "--wc-type=0",
+        "--validators=abc",
+      ],
+      async () => {
+        await assert.rejects(
+          main(),
+          /--validators must be a positive integer/
+        );
+      }
+    );
+  });
+
+  it("rejects non-positive validator counts", async () => {
+    await withArgv(
+      [
+        `--mnemonic=${TEST_MNEMONIC}`,
+        `--password=${TEST_PASSWORD}`,
+        "--wc-type=0",
+        "--validators=0",
+      ],
+      async () => {
+        await assert.rejects(
+          main(),
+          /--validators must be a positive integer/
+        );
+      }
+    );
+  });
+
+  it("rejects non-decimal validator counts", async () => {
+    for (const value of ["1e3", "0x10", " 2 "]) {
+      await withArgv(
+        [
+          `--mnemonic=${TEST_MNEMONIC}`,
+          `--password=${TEST_PASSWORD}`,
+          "--wc-type=0",
+          `--validators=${value}`,
+        ],
+        async () => {
+          await assert.rejects(
+            main(),
+            /--validators must be a positive integer/
+          );
+        }
+      );
+    }
+  });
+
+  it("rejects amounts below Gwei precision", async () => {
+    await withArgv(
+      [
+        `--mnemonic=${TEST_MNEMONIC}`,
+        `--password=${TEST_PASSWORD}`,
+        "--wc-type=0",
+        "--amount=0.0000000001",
+      ],
+      async () => {
+        await assert.rejects(
+          main(),
+          /--amount must be at least 1 ETH with at most 9 decimal places/
+        );
+      }
+    );
+  });
+
+  it("rejects amounts below 1 ETH", async () => {
+    await withArgv(
+      [
+        `--mnemonic=${TEST_MNEMONIC}`,
+        `--password=${TEST_PASSWORD}`,
+        "--wc-type=0",
+        "--amount=0.999999999",
+      ],
+      async () => {
+        await assert.rejects(
+          main(),
+          /--amount must be at least 1 ETH with at most 9 decimal places/
+        );
+      }
+    );
+  });
+
+  it("reports the maximum supported amount", async () => {
+    await withArgv(
+      [
+        `--mnemonic=${TEST_MNEMONIC}`,
+        `--password=${TEST_PASSWORD}`,
+        "--wc-type=0",
+        "--amount=9007199.254740992",
+      ],
+      async () => {
+        await assert.rejects(
+          main(),
+          /--amount must not exceed 9007199\.254740991 ETH/
+        );
+      }
+    );
+  });
 });
