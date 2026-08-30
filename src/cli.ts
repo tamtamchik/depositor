@@ -57,13 +57,14 @@ function parseAmountGwei(value: string): number {
     BigInt(whole || "0") * BigInt(ONE_ETH_GWEI) +
     BigInt(fraction.padEnd(9, "0") || "0");
 
-  if (
-    amountGwei < BigInt(ONE_ETH_GWEI) ||
-    amountGwei > BigInt(Number.MAX_SAFE_INTEGER)
-  ) {
+  if (amountGwei < BigInt(ONE_ETH_GWEI)) {
     throw new Error(
       "--amount must be at least 1 ETH with at most 9 decimal places"
     );
+  }
+
+  if (amountGwei > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error("--amount must not exceed 9007199.254740991 ETH");
   }
 
   return Number(amountGwei);

@@ -178,4 +178,21 @@ describe("CLI", () => {
       }
     );
   });
+
+  it("reports the maximum supported amount", async () => {
+    await withArgv(
+      [
+        `--mnemonic=${TEST_MNEMONIC}`,
+        `--password=${TEST_PASSWORD}`,
+        "--wc-type=0",
+        "--amount=9007199.254740992",
+      ],
+      async () => {
+        await assert.rejects(
+          main(),
+          /--amount must not exceed 9007199\.254740991 ETH/
+        );
+      }
+    );
+  });
 });
