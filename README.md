@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Depositor" width="100%">
+  <img src="https://raw.githubusercontent.com/tamtamchik/depositor/main/assets/banner.png" alt="Depositor" width="100%">
 </p>
 
 # @tamtamchik/depositor

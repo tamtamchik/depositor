@@ -42,14 +42,14 @@ function parseValidatorCount(value: string): number {
 function parseAmountGwei(value: string): number {
   if (!/^(?:\d+|\d+\.\d+|\.\d+)$/.test(value)) {
     throw new Error(
-      "--amount must be a positive ETH amount with at most 9 decimal places"
+      "--amount must be at least 1 ETH with at most 9 decimal places"
     );
   }
 
   const [whole = "0", fraction = ""] = value.split(".");
   if (fraction.length > 9) {
     throw new Error(
-      "--amount must be a positive ETH amount with at most 9 decimal places"
+      "--amount must be at least 1 ETH with at most 9 decimal places"
     );
   }
 
@@ -57,9 +57,12 @@ function parseAmountGwei(value: string): number {
     BigInt(whole || "0") * BigInt(ONE_ETH_GWEI) +
     BigInt(fraction.padEnd(9, "0") || "0");
 
-  if (amountGwei <= 0n || amountGwei > BigInt(Number.MAX_SAFE_INTEGER)) {
+  if (
+    amountGwei < BigInt(ONE_ETH_GWEI) ||
+    amountGwei > BigInt(Number.MAX_SAFE_INTEGER)
+  ) {
     throw new Error(
-      "--amount must be a positive ETH amount with at most 9 decimal places"
+      "--amount must be at least 1 ETH with at most 9 decimal places"
     );
   }
 

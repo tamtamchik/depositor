@@ -156,7 +156,24 @@ describe("CLI", () => {
       async () => {
         await assert.rejects(
           main(),
-          /--amount must be a positive ETH amount with at most 9 decimal places/
+          /--amount must be at least 1 ETH with at most 9 decimal places/
+        );
+      }
+    );
+  });
+
+  it("rejects amounts below 1 ETH", async () => {
+    await withArgv(
+      [
+        `--mnemonic=${TEST_MNEMONIC}`,
+        `--password=${TEST_PASSWORD}`,
+        "--wc-type=0",
+        "--amount=0.999999999",
+      ],
+      async () => {
+        await assert.rejects(
+          main(),
+          /--amount must be at least 1 ETH with at most 9 decimal places/
         );
       }
     );
