@@ -28,6 +28,10 @@ import {
 import type { CliOptions, WithdrawalCredentialsType } from "./types.ts";
 
 function parseValidatorCount(value: string): number {
+  if (!/^\d+$/.test(value)) {
+    throw new Error("--validators must be a positive integer");
+  }
+
   const validators = Number(value);
   if (!Number.isSafeInteger(validators) || validators < 1) {
     throw new Error("--validators must be a positive integer");

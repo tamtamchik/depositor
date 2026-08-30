@@ -126,6 +126,25 @@ describe("CLI", () => {
     );
   });
 
+  it("rejects non-decimal validator counts", async () => {
+    for (const value of ["1e3", "0x10", " 2 "]) {
+      await withArgv(
+        [
+          `--mnemonic=${TEST_MNEMONIC}`,
+          `--password=${TEST_PASSWORD}`,
+          "--wc-type=0",
+          `--validators=${value}`,
+        ],
+        async () => {
+          await assert.rejects(
+            main(),
+            /--validators must be a positive integer/
+          );
+        }
+      );
+    }
+  });
+
   it("rejects amounts below Gwei precision", async () => {
     await withArgv(
       [

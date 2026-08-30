@@ -3,7 +3,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   deriveEth2ValidatorKeys,
@@ -252,6 +252,8 @@ export async function generateValidatorKeys(
   password: string,
   outputDir: string
 ): Promise<ValidatorKeys> {
+  await mkdir(outputDir, { recursive: true });
+
   const masterSK = deriveKeyFromMnemonic(mnemonic);
   const { signing } = deriveEth2ValidatorKeys(masterSK, index);
   const pubkey = blsSigs.getPublicKey(signing).toBytes();

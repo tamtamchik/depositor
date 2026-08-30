@@ -112,7 +112,7 @@ import {
 } from "@tamtamchik/depositor";
 ```
 
-- `generateValidatorKeys(mnemonic, index, password, outputDir)` derives a validator keypair and writes an EIP-2335 keystore.
+- `generateValidatorKeys(mnemonic, index, password, outputDir)` derives a validator keypair, creates the output directory, and writes an EIP-2335 keystore.
 - `buildWithdrawalCredentials(type, pubkey, address?)` builds 0x00, 0x01, or 0x02 withdrawal credentials.
 - `generateDepositData(pubkey, signing, withdrawalCredentials, amountGwei, chain)` signs and returns one deposit data entry.
 - `verifyDepositData(depositData, domain)` checks roots and the BLS signature.
